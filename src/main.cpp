@@ -242,21 +242,34 @@ void setup()
     {
         Serial.println("Entering /save handler");
 
-        String hostname = request->getParam("hostname")->value();
-        String password = request->getParam("password")->value();
-        String mqtthost = request->getParam("mqtthost")->value();
+        //List all parameters
+        int params = request->params();
+        for(int i=0;i<params;i++)
+        {
+            AsyncWebParameter* p = request->getParam(i);
+            if(p->isFile()){ //p->isPost() is also true
+                Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+            } else if(p->isPost()){
+                Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+            } else {
+                Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+            }
+        }
+        // String hostname = request->getParam("hostname")->value();
+        // String password = request->getParam("password")->value();
+        // String mqtthost = request->getParam("mqtthost")->value();
 
-        Serial.println("Updating settings...");
-        Serial.print(hostname.c_str());
-        Serial.print(password.c_str());
-        Serial.print(mqtthost.c_str());
+        // Serial.println("Updating settings...");
+        // Serial.print(hostname.c_str());
+        // Serial.print(password.c_str());
+        // Serial.print(mqtthost.c_str());
 
-        preferences.begin("esp32demo", false);
-        preferences.putString("mqttServer", mqtthost);
-        preferences.putString("AP_Host", hostname);
-        preferences.putString("AP_Pass", password);
-        preferences.end();
-        request->send(SPIFFS, "/config.html", String(), false, processor);
+        // preferences.begin("esp32demo", false);
+        // preferences.putString("mqttServer", mqtthost);
+        // preferences.putString("AP_Host", hostname);
+        // preferences.putString("AP_Pass", password);
+        // preferences.end();
+        // request->send(SPIFFS, "/config.html", String(), false, processor);
     });
 
     server.on("/reboot", HTTP_POST, [](AsyncWebServerRequest *request)
