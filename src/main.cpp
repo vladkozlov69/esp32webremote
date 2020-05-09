@@ -251,6 +251,11 @@ void setup()
         request->send(SPIFFS, "/config.html", String(), false, processor);
     });
 
+    server.on("/reboot", HTTP_POST, [](AsyncWebServerRequest *request)
+    {
+        ESP.restart();
+    });
+
     // Start server
     server.begin();
 }
