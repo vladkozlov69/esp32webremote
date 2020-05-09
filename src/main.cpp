@@ -28,7 +28,7 @@ AsyncWebServer server(80);
 
 WiFiClient espClient;
 
-PubSubClient client(espClient);
+PubSubClient mqttClient(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
@@ -107,20 +107,20 @@ void callback(char* topic, byte* message, unsigned int length)
 void reconnect() 
 {
     // Loop until we're reconnected
-    while (!client.connected()) 
+    while (!mqttClient.connected()) 
     {
         Serial.print("Attempting MQTT connection...");
         // Attempt to connect
-        if (client.connect("ESP8266Client")) 
+        if (mqttClient.connect("ESP8266Client")) 
         {
             Serial.println("connected");
             // Subscribe
-            client.subscribe("esp32/command");
+            mqttClient.subscribe("esp32/command");
         } 
         else 
         {
             Serial.print("failed, rc=");
-            Serial.print(client.state());
+            Serial.print(mqttClient.state());
             Serial.println(" try again in 5 seconds");
             // Wait 5 seconds before retrying
             delay(5000);
@@ -189,32 +189,66 @@ void setup()
     Serial.print(" => ");
     Serial.println(mqtt_ip);
 
-    client.setServer(mqtt_ip.c_str(), 1883);
+    mqttClient.setServer(mqtt_ip.c_str(), 1883);
     //  client.setServer("192.168.1.102", 1883);
-    client.setCallback(callback);
+    mqttClient.setCallback(callback);
 
     // Route for root / web page
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/index.html", String(), false, processor);
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        request->send(SPIFFS, "/index.html", String(), false, processor);
     });
 
     // Route to load style.css file
-    server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/style.css", "text/css");
+    server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        request->send(SPIFFS, "/style.css", "text/css");
     });
 
     // Route to set GPIO to HIGH
-    server.on("/on", HTTP_GET, [](AsyncWebServerRequest *request){
-    digitalWrite(ledPin, HIGH);   
-    client.publish("esp32/state", "1"); 
-    request->send(SPIFFS, "/index.html", String(), false, processor);
+    server.on("/on", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        digitalWrite(ledPin, HIGH);   
+        mqttClient.publish("esp32/state", "1"); 
+        request->send(SPIFFS, "/index.html", String(), false, processor);
     });
 
     // Route to set GPIO to LOW
-    server.on("/off", HTTP_GET, [](AsyncWebServerRequest *request){
-    digitalWrite(ledPin, LOW);  
-    client.publish("esp32/state", "0");   
-    request->send(SPIFFS, "/index.html", String(), false, processor);
+    server.on("/off", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        digitalWrite(ledPin, LOW);  
+        mqttClient.publish("esp32/state", "0");   
+        request->send(SPIFFS, "/index.html", String(), false, processor);
+    });
+
+    server.on("/config.html", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        request->send(SPIFFS, "/config.html", String(), false, processor);
+    });
+
+    server.on("/factory", HTTP_POST, [](AsyncWebServerRequest *request)
+    {
+        digitalWrite(ledPin, LOW);  
+        mqttClient.publish("esp32/state", "0");   
+        preferences.begin("esp32demo", false);
+        preferences.putString("mqttServer", MQTT_HOST);
+        preferences.putString("AP_Host", "");
+        preferences.putString("AP_Pass", "");
+        preferences.end();
+        request->send(SPIFFS, "/config.html", String(), false, processor);
+    });
+
+    server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
+    {
+        String hostname = request->getParam("hostname")->value();
+        String password = request->getParam("password")->value();
+        String mqtthost = request->getParam("mqtthost")->value();
+        preferences.begin("esp32demo", false);
+        preferences.putString("mqttServer", mqtthost);
+        preferences.putString("AP_Host", hostname);
+        preferences.putString("AP_Pass", password);
+        preferences.end();
+        request->send(SPIFFS, "/config.html", String(), false, processor);
     });
 
     // Start server
@@ -223,10 +257,10 @@ void setup()
  
 void loop()
 {
-    if (!client.connected()) 
+    if (!mqttClient.connected()) 
     {
         reconnect();
     }
 
-    client.loop();
+    mqttClient.loop();
 }

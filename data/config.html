@@ -1,0 +1,24 @@
+<html>
+    <head>
+        <title>Sensor config</title>
+    </head>
+    <body>
+        <p>
+        <form action="/save">
+            <label for="hostname">WiFi access point</label><br>
+            <input type="text" id="hostname"><br>
+            <label for="password">WiFi password</label><br>
+            <input type="text" id="password"><br>
+            <label for="mqtthost">MQTT Broker</label><br>
+            <input type="text" id="mqtthost"><br>
+            <input type="submit" value="Update config">
+        </form>
+        </p>
+        <hr/>
+        <p>
+            <form action="/factory" method="POST">
+                <input type="submit" value="Reset to factory settings">
+            </form>
+        </p>
+    </body>
+</html>
