@@ -240,9 +240,17 @@ void setup()
 
     server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
     {
+        Serial.println("Entering /save handler");
+
         String hostname = request->getParam("hostname")->value();
         String password = request->getParam("password")->value();
         String mqtthost = request->getParam("mqtthost")->value();
+
+        Serial.println("Updating settings...");
+        Serial.print(hostname.c_str());
+        Serial.print(password.c_str());
+        Serial.print(mqtthost.c_str());
+
         preferences.begin("esp32demo", false);
         preferences.putString("mqttServer", mqtthost);
         preferences.putString("AP_Host", hostname);

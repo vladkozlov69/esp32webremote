@@ -4,13 +4,13 @@
     </head>
     <body>
         <p>
-        <form action="/save">
+        <form action="/save" method="POST">
             <label for="hostname">WiFi access point</label><br>
-            <input type="text" id="hostname"><br>
+            <input type="text" id="hostname" name="hostname"><br>
             <label for="password">WiFi password</label><br>
-            <input type="text" id="password"><br>
+            <input type="text" id="password" name="password"><br>
             <label for="mqtthost">MQTT Broker</label><br>
-            <input type="text" id="mqtthost"><br>
+            <input type="text" id="mqtthost" name="mqtthost"><br>
             <input type="submit" value="Update config">
         </form>
         </p>
