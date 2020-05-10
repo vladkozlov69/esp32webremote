@@ -18,6 +18,11 @@ const char* AP_SSID = "esp32demo";
 const char* AP_PASSWORD = "esp32demo";
 const char* MQTT_HOST = "hassistant";
 
+String mqttHost = String();
+String apHost = String();
+String apPass = String();
+String localMacAddr;
+
 // Set LED GPIO
 const int ledPin = 2;
 // Stores LED state
@@ -52,19 +57,10 @@ String findMDNS(String mDnsHost)
 // Replaces placeholder with LED state value
 String processor(const String& var)
 {
-    if(var == "STATE")
-    {
-        if(digitalRead(ledPin))
-        {
-            ledState = "ON";
-        }
-        else
-        {
-            ledState = "OFF";
-        }
-
-        return ledState;
-    }
+    if(var == "STATE") return digitalRead(ledPin) ? "ON" : "OFF";
+    if(var == "hostname") return apHost;
+    if(var == "password") return apPass;
+    if(var == "mqtthost") return mqttHost;
 
     return String();
 }
@@ -134,13 +130,15 @@ void setup()
     Serial.begin(9600);
     pinMode(ledPin, OUTPUT);
 
-    String localMacAddr = WiFi.macAddress();
-    localMacAddr.replace(":","_");
+    localMacAddr = WiFi.macAddress();
+    localMacAddr.replace(":","");
+    Serial.print("Local MAC:");
+    Serial.println(localMacAddr);
 
     preferences.begin("esp32demo", false);
-    String mqttHost = preferences.getString("mqttServer", MQTT_HOST);
-    String apHost = preferences.getString("AP_Host");
-    String apPass = preferences.getString("AP_Pass");
+    mqttHost = preferences.getString("mqttServer", MQTT_HOST);
+    apHost = preferences.getString("AP_Host");
+    apPass = preferences.getString("AP_Pass");
     preferences.end();
 
     // Initialize SPIFFS
@@ -190,7 +188,6 @@ void setup()
     Serial.println(mqtt_ip);
 
     mqttClient.setServer(mqtt_ip.c_str(), 1883);
-    //  client.setServer("192.168.1.102", 1883);
     mqttClient.setCallback(callback);
 
     // Route for root / web page
@@ -209,7 +206,7 @@ void setup()
     server.on("/on", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         digitalWrite(ledPin, HIGH);   
-        mqttClient.publish("esp32/state", "1"); 
+        mqttClient.publish((String() + "esp32/" + localMacAddr +"/state").c_str(), "1"); 
         request->send(SPIFFS, "/index.html", String(), false, processor);
     });
 
@@ -217,7 +214,7 @@ void setup()
     server.on("/off", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         digitalWrite(ledPin, LOW);  
-        mqttClient.publish("esp32/state", "0");   
+        mqttClient.publish((String() + "esp32/" + localMacAddr +"/state").c_str(), "0");   
         request->send(SPIFFS, "/index.html", String(), false, processor);
     });
 
@@ -235,41 +232,22 @@ void setup()
         preferences.putString("AP_Host", "");
         preferences.putString("AP_Pass", "");
         preferences.end();
-        request->send(SPIFFS, "/config.html", String(), false, processor);
+        request->send(SPIFFS, "/reboot.html", String(), false, processor);
+        ESP.restart();
     });
 
     server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
     {
-        Serial.println("Entering /save handler");
+        apHost = request->getParam("hostname", true, false)->value().c_str();
+        apPass = request->getParam("password", true, false)->value();
+        mqttHost = request->getParam("mqtthost", true, false)->value();
 
-        //List all parameters
-        int params = request->params();
-        for(int i=0;i<params;i++)
-        {
-            AsyncWebParameter* p = request->getParam(i);
-            if(p->isFile()){ //p->isPost() is also true
-                Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
-            } else if(p->isPost()){
-                Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-            } else {
-                Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
-            }
-        }
-        // String hostname = request->getParam("hostname")->value();
-        // String password = request->getParam("password")->value();
-        // String mqtthost = request->getParam("mqtthost")->value();
-
-        // Serial.println("Updating settings...");
-        // Serial.print(hostname.c_str());
-        // Serial.print(password.c_str());
-        // Serial.print(mqtthost.c_str());
-
-        // preferences.begin("esp32demo", false);
-        // preferences.putString("mqttServer", mqtthost);
-        // preferences.putString("AP_Host", hostname);
-        // preferences.putString("AP_Pass", password);
-        // preferences.end();
-        // request->send(SPIFFS, "/config.html", String(), false, processor);
+        preferences.begin("esp32demo", false);
+        preferences.putString("mqttServer", mqttHost);
+        preferences.putString("AP_Host", apHost);
+        preferences.putString("AP_Pass", apPass);
+        preferences.end();
+        request->send(SPIFFS, "/config.html", String(), false, processor);
     });
 
     server.on("/reboot", HTTP_POST, [](AsyncWebServerRequest *request)
