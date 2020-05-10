@@ -1,9 +1,3 @@
-/*********
-  Rui Santos
-  Complete project details at https://randomnerdtutorials.com  
-*********/
-
-// Import required libraries
 #include "WiFi.h"
 #include "ESPAsyncWebServer.h"
 #include "SPIFFS.h"
@@ -11,6 +5,7 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <ESPmDNS.h>
+#include <Update.h>
 #include <Preferences.h>
 
 
@@ -124,6 +119,58 @@ void reconnect()
     }
 }
 
+uint32_t getSpiffsPartitionSize()
+{
+ 	const esp_partition_t *spiffs_partition = esp_partition_find_first(
+        ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_SPIFFS, NULL);
+
+    return spiffs_partition->size;
+}
+
+static void handle_update_progress_cb(AsyncWebServerRequest *request, String filename, size_t index, 
+    uint8_t *data, size_t len, bool final) 
+{
+    bool isSpiffs = filename.startsWith("spiffs");
+
+    uint32_t free_space = isSpiffs 
+        ? getSpiffsPartitionSize() 
+        : (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+
+    if (!index)
+    {
+        Serial.print("Update:");
+        Serial.println(filename);
+        //Update.runAsync(true);
+        if (!Update.begin(free_space, isSpiffs ? U_SPIFFS : U_FLASH)) 
+        {
+            Update.printError(Serial);
+        }
+    }
+
+    Serial.print("..writing..");
+    Serial.print(len);
+    Serial.print("..remaining..");
+    Serial.println(Update.remaining());
+
+    if (Update.write(data, len) != len) 
+    {
+        Update.printError(Serial);
+    }
+
+    if (final) 
+    {
+        if (!Update.end(true))
+        {
+            Update.printError(Serial);
+        } 
+        else 
+        {
+            //restartNow = true;//Set flag so main loop can issue restart call
+            Serial.println("Update complete");
+        }
+    }
+}
+
 void setup()
 {
     // Serial port for debugging purposes
@@ -196,10 +243,21 @@ void setup()
         request->send(SPIFFS, "/index.html", String(), false, processor);
     });
 
+    server.on("/ota.html", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        request->send(SPIFFS, "/ota.html", String(), false, processor);
+    });
+
     // Route to load style.css file
     server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         request->send(SPIFFS, "/style.css", "text/css");
+    });
+
+    // Route to load jquery.min.js file
+    server.on("/jquery.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        request->send(SPIFFS, "/jquery.min.js", "text/javascript");
     });
 
     // Route to set GPIO to HIGH
@@ -238,7 +296,7 @@ void setup()
 
     server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
     {
-        apHost = request->getParam("hostname", true, false)->value().c_str();
+        apHost = request->getParam("hostname", true, false)->value();
         apPass = request->getParam("password", true, false)->value();
         mqttHost = request->getParam("mqtthost", true, false)->value();
 
@@ -249,6 +307,12 @@ void setup()
         preferences.end();
         request->send(SPIFFS, "/config.html", String(), false, processor);
     });
+
+    // handler for the /update form POST (once file upload finishes)
+    server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request)
+    {
+        request->send(200);
+    }, handle_update_progress_cb);
 
     server.on("/reboot", HTTP_POST, [](AsyncWebServerRequest *request)
     {
