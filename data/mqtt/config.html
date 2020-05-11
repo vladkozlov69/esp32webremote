@@ -1,0 +1,31 @@
+<html>
+    <head>
+        <title>MQTT config</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="data:,">
+        <link rel="stylesheet" type="text/css" href="/style.css">
+    </head>
+    <body>
+        <p>
+        <form action="/mqtt/save" method="POST">
+            <label for="mqtthost">MQTT Broker</label><br>
+            <input type="text" id="mqtthost" name="mqtthost" value="%mqtthost%"><br>
+            <label for="mqttprfx">MQTT Topic Prefix</label><br>
+            <input type="text" id="mqttprfx" name="mqttprfx" value="%mqttprfx%"><br>
+            <input type="submit" class="button button1" value="Update config">
+        </form>
+        </p>
+        <hr/>
+        <p>
+            <form action="/mqtt/factory" method="POST">
+                <input type="submit" class="button button2" value="Reset to factory settings">
+            </form>
+        </p>
+        <p>
+            <form action="/reboot" method="POST">
+                <input type="submit" class="button button2" value="Restart">
+            </form>
+        </p>
+        <a href="/">Home</a>
+    </body>
+</html>
