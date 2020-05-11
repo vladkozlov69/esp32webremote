@@ -5,12 +5,12 @@ void OTAHelperClass::bind(AsyncWebServer * server)
 {
     if (SPIFFS.begin(false))
     {
-        server->on("/ota.html", HTTP_GET, [](AsyncWebServerRequest *request)
+        server->on("/ota", HTTP_GET, [](AsyncWebServerRequest *request)
         {
-            request->send(SPIFFS, "/ota.html", String(), false, OTAHelper.processor);
+            request->send(SPIFFS, "/ota/ota.html", String(), false, OTAHelper.processor);
         });
 
-            // handler for the /update form POST (once file upload finishes)
+        // handler for the /update form POST (once file upload finishes)
         server->on("/update", HTTP_POST, [](AsyncWebServerRequest *request)
         {
             request->send(200);
