@@ -32,6 +32,7 @@ public:
     void begin(Preferences * preferences, MDNSHelper * dnsHelper, MQTT_CALLBACK_SIGNATURE);
     void bind(AsyncWebServer * server);
     void publish(const char * subTopic, const char * data);
+    void publish(const char * subTopic, const char * data, bool retain);
     static void factoryReset(MQTTHelperClass * mqttHelper);
     bool poll();
     String getHost() {return m_MqttHost;}

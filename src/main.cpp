@@ -8,6 +8,17 @@
 #include "OTAHelper.h"
 #include "MQTTHelper.h"
 
+#include <RCSwitch.h>
+#include <Regexp.h>
+
+RCSwitch rcTransmitter = RCSwitch();
+
+#define RF_TRANSMIT_PIN 12
+#define RF_RECEIVE_PIN 27
+/*
+RF Receive Module data pin	27(26)	-
+RF Send Module data pin	-	12
+*/
 
 // Set LED GPIO
 const int ledPin = 2;
@@ -61,6 +72,17 @@ void callback(char* topic, byte* message, unsigned int length)
             digitalWrite(ledPin, LOW);
         }
     }
+
+    MatchState ms;
+    ms.Target(topic);
+
+    if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/rc/(%d+)/command").c_str()))
+    {
+        char buf [20]; 
+        Serial.print("RC Transmit");
+        Serial.println(ms.GetCapture(buf, 0));
+        rcTransmitter.send(atol(buf), 24);
+    }
 }
 
 void setup()
@@ -68,6 +90,9 @@ void setup()
     // Serial port for debugging purposes
     Serial.begin(9600);
     pinMode(ledPin, OUTPUT);
+
+    rcTransmitter.enableTransmit(RF_TRANSMIT_PIN);
+    rcTransmitter.enableReceive(RF_RECEIVE_PIN);
 
     // Initialize SPIFFS
     if(!SPIFFS.begin(false))
@@ -132,4 +157,13 @@ void loop()
     MQTTHelper.poll();
 
     if (OTAHelper.restartRequested()) ESP.restart();
+
+    if (rcTransmitter.available()) 
+    {
+        Serial.print("Received "); Serial.println( rcTransmitter.getReceivedValue() );
+
+        MQTTHelper.publish((String("rc/") + rcTransmitter.getReceivedValue() + "/state").c_str(), "on", true);
+
+        rcTransmitter.resetAvailable();
+    }
 }

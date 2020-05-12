@@ -83,7 +83,12 @@ void MQTTHelperClass::bind(AsyncWebServer * server)
 
 void MQTTHelperClass::publish(const char * subTopic, const char * data)
 {
-    m_MqttClient->publish((m_MqttTopicPrefix + "/" + subTopic).c_str(), data);
+    publish(subTopic, data, false);
+}
+
+void MQTTHelperClass::publish(const char * subTopic, const char * data, bool retain)
+{
+    m_MqttClient->publish((m_MqttTopicPrefix + "/" + subTopic).c_str(), data, retain);
 }
 
 void MQTTHelperClass::reconnect()
@@ -98,7 +103,8 @@ void MQTTHelperClass::reconnect()
         {
             Serial.println("connected");
             // Subscribe
-            m_MqttClient->subscribe("esp32/command");
+            m_MqttClient->subscribe((m_MqttTopicPrefix + "/+/+/command").c_str());
+            m_MqttClient->subscribe((m_MqttTopicPrefix + "/+/command").c_str());
         } 
         else 
         {
