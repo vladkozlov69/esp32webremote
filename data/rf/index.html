@@ -1,0 +1,37 @@
+<html>
+    <head>
+        <title>RF sensor review</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="data:,">
+        <link rel="stylesheet" type="text/css" href="/style.css">
+        <script src="/jquery.min.js"></script>
+    </head>
+    <body>
+        <form>
+        <div id="items"></div>
+        </form>
+        <p><a href="/rf/register"><button class="button button3">Add sensor</button></a></p>
+        <p><a href="/rf/save"><button class="button button3">Save changes</button></a></p>
+        <script>
+        //When the page has loaded.
+        $( document ).ready(function(){
+            //Perform Ajax request.
+            $.ajax({
+                url: '/rf/list.json',
+                type: 'get',
+                success: function(data) {
+                    $.each(data.acl, function(i, val) {
+                        $('#items').append(val);
+                        $('#items').append(" - <a href='/rf/remove?id=" + val + "'>Remove</a>");
+                        $('#items').append('<br/>');
+                    });
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    var errorMsg = 'Ajax request failed: ' + xhr.responseText;
+                    $('#items').html(errorMsg);
+                  }
+            });
+        });
+        </script>
+    </body>
+</html>

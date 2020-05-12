@@ -1,0 +1,58 @@
+<html>
+    <head>
+        <title>RF sensor registration</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="data:,">
+        <link rel="stylesheet" type="text/css" href="/style.css">
+        <script src="/jquery.min.js"></script>
+    </head>
+    <body>
+        <form>
+            <div id="status">Waiting for signal...</div>
+        </form>
+        <button id="cancel" class="button button2">Cancel</button>
+        <button id="confirm" class="button" disabled>Confirm</button>
+        
+        <script>
+            (function() {
+            var status = $('#status'),
+                poll = function() {
+                    $.ajax({
+                        url: '/rf/state.json',
+                        dataType: 'json',
+                        type: 'get',
+                        success: function(data) { // check if available
+                            status.text('Offline!');
+                            if (data.ready == 'true') 
+                            { // get and check data value
+                                status.text(data.sensorId); // get and print data string
+                                clearInterval(pollInterval); // optional: stop poll function
+                                $("#confirm").removeAttr("disabled");
+                            }
+                        },
+                        error: function() { // error logging
+                            console.log('Error!');
+                        }
+                    });
+                },
+                pollInterval = setInterval(function() { // run function every 2000 ms
+                    poll();
+                }, 2000);
+
+                $("#cancel").on( "click", function() {
+                    clearInterval(pollInterval);
+                    console.log('cancel!');
+                    location.href = '/rf/cancel';
+                });
+
+                $("#confirm").on( "click", function() {
+                    clearInterval(pollInterval);
+                    console.log('confirm!');
+                    location.href = '/rf/confirm';
+                });
+
+                poll(); // also run function on init
+            })();
+        </script>
+    </body>
+</html>
