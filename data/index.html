@@ -7,11 +7,13 @@
         <link rel="stylesheet" type="text/css" href="/style.css">
     </head>
     <body>
-        <h1>ESP32 Web Server</h1>
-        <p>GPIO state: <strong> %STATE%</strong></p>
-        <p><a href="/on"><button class="button">ON</button></a></p>
-        <p><a href="/off"><button class="button button2">OFF</button></a></p>
-        <p><a href="/ap/config"><button class="button button3">AP CONFIG</button></a></p>
-        <p><a href="/mqtt/config"><button class="button button3">MQTT CONFIG</button></a></p>
+        <div class="wrapper">
+            <p>GPIO state: <strong> %STATE%</strong></p>
+            <p><a href="/on"><button class="button">ON</button></a></p>
+            <p><a href="/off"><button class="button button2">OFF</button></a></p>
+            <p><a href="/ap/config"><button class="button button3">AP CONFIG</button></a></p>
+            <p><a href="/mqtt/config"><button class="button button3">MQTT CONFIG</button></a></p>
+            <p><a href="/rf/index"><button class="button button3">RF CONFIG</button></a></p>
+        </div>
     </body>
 </html>

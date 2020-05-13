@@ -14,25 +14,31 @@ p{
   font-size: 1.5rem;
 }
 
+.wrapper
+{
+  max-width:258px;
+  margin: 0 auto;
+}
+
 .button {
   display: inline-block;
-  background-color: #008CBA;
+  background-color: #eee;
   border: none;
   border-radius: 4px;
-  color: white;
+  color: black;
   padding: 16px 40px;
   text-decoration: none;
   font-size: 20px;
-  margin: 2px;
   cursor: pointer;
+  width:100%;
 }
 
 .button2 {
-  background-color: #f44336;
+  /* background-color: #f44336; */
 }
 
 .button3 {
-  background-color: #ff00ff;
+  /* background-color: #ff00ff; */
 }
 
 #file-input,input {
@@ -50,10 +56,11 @@ input:not(.button) {
 }
 
 body {
-  background:#3498db;
+  background:#161616;
   font-family:sans-serif;
   font-size:14px;
-  color:#777
+  color:#777;
+  text-align: center;
 }
 
 #file-input {

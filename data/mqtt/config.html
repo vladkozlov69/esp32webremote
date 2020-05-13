@@ -6,25 +6,27 @@
         <link rel="stylesheet" type="text/css" href="/style.css">
     </head>
     <body>
-        <p>
-        <form action="/mqtt/save" method="POST">
-            <label for="mqtthost">MQTT Broker</label><br>
-            <input type="text" id="mqtthost" name="mqtthost" value="%mqtthost%"><br>
-            <label for="mqttprfx">MQTT Topic Prefix</label><br>
-            <input type="text" id="mqttprfx" name="mqttprfx" value="%mqttprfx%"><br>
-            <input type="submit" class="button button1" value="Update config">
-        </form>
-        </p>
-        <p>
-            <form action="/mqtt/factory" method="POST">
-                <button type="submit" class="button button2">Factory reset</button>
+        <div class="wrapper">
+            <p><a href="/"><button class="button btnhome">&lt; Home page</button></a></p>
+            <p>
+            <form action="/mqtt/save" method="POST">
+                <label for="mqtthost">MQTT Broker</label><br>
+                <input type="text" id="mqtthost" name="mqtthost" value="%mqtthost%"><br>
+                <label for="mqttprfx">MQTT Topic Prefix</label><br>
+                <input type="text" id="mqttprfx" name="mqttprfx" value="%mqttprfx%"><br>
+                <input type="submit" class="button button1" value="Update config">
             </form>
-        </p>
-        <p>
-            <form action="/reboot" method="POST">
-                <button type="submit" class="button button2">Reboot</button>
-            </form>
-        </p>
-        <a href="/">Home</a>
+            </p>
+            <p>
+                <form action="/mqtt/factory" method="POST">
+                    <button type="submit" class="button button2">Factory reset</button>
+                </form>
+            </p>
+            <p>
+                <form action="/reboot" method="POST">
+                    <button type="submit" class="button button2">Reboot</button>
+                </form>
+            </p>
+        </div>
     </body>
 </html>

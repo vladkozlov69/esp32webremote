@@ -7,12 +7,14 @@
         <script src="/jquery.min.js"></script>
     </head>
     <body>
-        <form>
-            <div id="status">Waiting for signal...</div>
-        </form>
-        <button id="cancel" class="button button2">Cancel</button>
-        <button id="confirm" class="button" disabled>Confirm</button>
-        
+        <div class="wrapper">
+            <p><a href="/"><button class="button btnhome">&lt; Home page</button></a></p>
+            <form>
+                <div id="status">Waiting for signal...</div>
+            </form>
+            <button id="cancel" class="button button2">Cancel</button>
+            <button id="confirm" class="button" disabled>Confirm</button>
+        </div>
         <script>
             (function() {
             var status = $('#status'),
