@@ -6,25 +6,27 @@
         <link rel="stylesheet" type="text/css" href="/style.css">
     </head>
     <body>
-        <p>
-        <form action="/ap/save" method="POST">
-            <label for="hostname">WiFi access point</label><br>
-            <input type="text" id="hostname" name="hostname" value="%hostname%"><br>
-            <label for="password">WiFi password</label><br>
-            <input type="text" id="password" name="password" value="%password%"><br>
-            <button type="submit" class="button button1">Update config</button>
-        </form>
-        </p>
-        <p>
-            <form action="/ap/factory" method="POST">
-                <button type="submit" class="button button2">Factory reset</button>
+        <div class="wrapper">
+            <p><a href="/"><button class="button btnhome">&lt; Home page</button></a></p>
+            <p>
+            <form action="/ap/save" method="POST">
+                <label for="hostname">WiFi access point</label><br>
+                <input type="text" id="hostname" name="hostname" value="%hostname%"><br>
+                <label for="password">WiFi password</label><br>
+                <input type="text" id="password" name="password" value="%password%"><br>
+                <button type="submit" class="button button1">Update config</button>
             </form>
-        </p>
-        <p>
-            <form action="/reboot" method="POST">
-                <button type="submit" class="button button2">Reboot</button>
-            </form>
-        </p>
-        <a href="/">Home</a>
+            </p>
+            <p>
+                <form action="/ap/factory" method="POST">
+                    <button type="submit" class="button button2">Factory reset</button>
+                </form>
+            </p>
+            <p>
+                <form action="/reboot" method="POST">
+                    <button type="submit" class="button button2">Reboot</button>
+                </form>
+            </p>
+        </div>
     </body>
 </html>
