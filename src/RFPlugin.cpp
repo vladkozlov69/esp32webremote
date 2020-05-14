@@ -175,14 +175,22 @@ void RFPluginClass::poll()
 
         Serial.print("Received "); Serial.println(m_RCSwitch.getReceivedValue());
 
-        MQTTHelper.publish((String("rc/") + receivedValue + "/state").c_str(), "on", true);
-
         if (m_SensorRegisterMode)
         {
             m_SensorRegisterMode = false;
             m_RegisteredSensorId = receivedValue;
         }
+        else
+        {
+            char buf[16];
+            ltoa(receivedValue, buf, 10);
 
+            if (m_RegisteredSensors.containsIgnoreCase(buf))
+            {
+                MQTTHelper.publish((String("rc/") + buf + "/state").c_str(), "on", true);
+            }
+        }
+        
         m_RCSwitch.resetAvailable();
     }
 }
