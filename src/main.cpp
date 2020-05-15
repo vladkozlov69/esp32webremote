@@ -13,7 +13,7 @@
 #include <Regexp.h>
 #include <ArduinoJson.h>
 #include <StringArray.h>
-
+#include <CellPlugin.h>
 
 
 #define RF_TRANSMIT_PIN 12
@@ -33,6 +33,16 @@ AsyncWebServer server(80);
 
 Preferences preferences;
 MDNSHelper dnsHelper;
+
+#define SERIAL1_RXPIN 33
+#define SERIAL1_TXPIN 32
+#define PWRKEY 14
+
+unsigned long simLastPoll;
+Sim5360 sim;
+
+int pwrOff = 15000;
+int pwrOn = 30000;
 
 // Replaces placeholder with LED state value
 String processor(const String& var)
@@ -73,12 +83,15 @@ void callback(char* topic, byte* message, unsigned int length)
     }
 
     RFPlugin.callback(topic, message, length);
+    CellPlugin.callback(topic, message, length);
 }
 
 void setup()
 {
     // Serial port for debugging purposes
     Serial.begin(9600);
+    Serial1.begin(115200, SERIAL_8N1, SERIAL1_RXPIN, SERIAL1_TXPIN);
+
     pinMode(ledPin, OUTPUT);
 
     // Initialize SPIFFS
@@ -94,10 +107,13 @@ void setup()
 
     RFPlugin.begin(&MQTTHelper, RF_RECEIVE_PIN, RF_TRANSMIT_PIN);
 
+    CellPlugin.begin(&preferences, &MQTTHelper, &Serial1, &Serial);
+
     MQTTHelper.bind(&server);
     OTAHelper.bind(&server);
     APHelper.bind(&server);
     RFPlugin.bind(&server);
+    CellPlugin.bind(&server);
 
     // Route for root / web page
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -140,6 +156,16 @@ void setup()
     server.begin();
 
     MQTTHelper.begin(&preferences, &dnsHelper, callback);
+
+
+    // pinMode(PWRKEY, OUTPUT);
+    // digitalWrite(PWRKEY, HIGH);
+  
+    
+
+    // sim.begin("", &Serial1, NULL);
+
+    // simLastPoll = millis();
 }
  
 void loop()
@@ -147,4 +173,52 @@ void loop()
     if (OTAHelper.restartRequested()) ESP.restart();
     MQTTHelper.poll();
     RFPlugin.poll();
+    CellPlugin.poll();
+
+/*
+    if (millis() > pwrOff && pwrOff > 0)
+    {
+        pwrOff = 0;
+        Serial.println("Turning off");
+        digitalWrite(PWRKEY, LOW);
+        delay(2000);
+        digitalWrite(PWRKEY, HIGH);
+    }
+
+    if (millis() > pwrOn && pwrOn > 0)
+    {
+        Serial.println("Turning on");
+        pwrOn = 0;
+        digitalWrite(PWRKEY, LOW);
+        delay(250);
+        digitalWrite(PWRKEY, HIGH);
+    }
+*/
+/*
+    if (millis() - simLastPoll > 2000)
+    {
+        Serial.print("GSM Network status:"); Serial.println(sim.checkRegistration());    
+        Serial.print("GSM operator:"); Serial.println(sim.getOperatorName());
+        Serial.print("GSM signal level:"); Serial.println(sim.getSignalLevel());
+        Serial.print("Packet connection status:"); Serial.println(sim.checkPacketStatus());
+        Serial.print("Active calls:"); Serial.println(sim.getActiveCallsCount());
+        Serial.print("SMS messages:"); Serial.println(sim.getSmsMessages());
+
+        // LinkedList<int> * smsIndexes = sim.getSmsIndexes();
+
+        // for (int i = 0; i < smsIndexes->size(); i++)
+        // {
+        // SmsMessage msg = sim.getSmsMessage((*smsIndexes)[i]);
+        // Serial.print(msg.sender);
+        // Serial.print(" => ");
+        // Serial.println(msg.body);
+        // }
+
+    //    Serial.println(sim.sendData("AT+CMGF=1", 2000));
+    //    Serial.println(sim.sendData("AT+CMGL=\"ALL\"", 2000));
+    //    Serial.println(sim.sendData("AT+CMGR=0", 2000));
+    //    Serial.println(sim.sendData("AT+CMGD=0", 2000));
+        simLastPoll = millis();
+    }
+*/
 }
