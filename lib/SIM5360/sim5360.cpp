@@ -193,7 +193,7 @@ int Sim5360::getActiveCallsCount()
 int Sim5360::getSmsMessages()
 {
     
-	m_SmsMessages.clear();
+	m_SmsMessages.free();
 
 	if (sendDataAndCheckOk("AT+CMGF=1"))
 	{
@@ -212,7 +212,7 @@ int Sim5360::getSmsMessages()
 		}
 	}
 
-	return m_SmsMessages.size();
+	return m_SmsMessages.length();
 }
 
 SmsMessage Sim5360::getSmsMessage(int index)

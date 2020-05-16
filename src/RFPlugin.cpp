@@ -145,7 +145,7 @@ void RFPluginClass::bind(AsyncWebServer * server)
     });
 }
 
-void RFPluginClass::callback(char* topic, byte* message, unsigned int length)
+void RFPluginClass::callback(const char* topic, const char * message)
 {
     MatchState ms;
     ms.Target(topic);

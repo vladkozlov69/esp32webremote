@@ -23,7 +23,7 @@ void CellPluginClass::bind(AsyncWebServer * server)
     // todo WEB config stuff
 }
 
-void CellPluginClass::callback(char* topic, byte* message, unsigned int length)
+void CellPluginClass::callback(const char* topic, const char* message)
 {
     MatchState ms;
     ms.Target(topic);
@@ -47,23 +47,15 @@ void CellPluginClass::callback(char* topic, byte* message, unsigned int length)
     if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/sms/(%d+)/command").c_str()))
     {
         char buf [20]; 
-        char msg [200];
         Serial.print("SMS Send");
         Serial.println(ms.GetCapture(buf, 0)); // it's a number send SMS to
 
-        strncpy((char *)message, msg, length);
-        m_Sim.sendSms(buf, (const char *)msg);
-        if (m_CallInProgress && (m_CallBeginTime > millis() || millis() - m_CallBeginTime > m_CallTimeout))
+        if (m_Sim.getActiveCallsCount() > 0)
         {
-            if (m_Sim.getActiveCallsCount() > 0)
-            {
-                m_Sim.hangup();
-            }
-
-            m_CallInProgress = false;
+            m_Sim.hangup();
         }
 
-        m_Sim.sendSms(buf, "sms test");
+        m_Sim.sendSms(buf, message);
     }
 }
 
@@ -72,9 +64,14 @@ void CellPluginClass::poll()
     // check for SMS messages here
 
     // hangup call if exist on timeout
-    if (m_Sim.getActiveCallsCount() > 0)
+    if (m_CallInProgress && (m_CallBeginTime > millis() || millis() - m_CallBeginTime > m_CallTimeout))
     {
+        if (m_Sim.getActiveCallsCount() > 0)
+        {
+            m_Sim.hangup();
+        }
 
+        m_CallInProgress = false;
     }
 }
 

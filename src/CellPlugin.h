@@ -23,7 +23,7 @@ private:
 public:
     bool begin(Preferences * preferences, MQTTHelperClass * mqttHelper, Stream * module, Stream * debugOut);
     void bind(AsyncWebServer * server);
-    void callback(char* topic, byte* message, unsigned int length);
+    void callback(const char* topic, const char* message);
     void poll();
 };
 

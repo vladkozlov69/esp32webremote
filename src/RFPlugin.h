@@ -25,7 +25,7 @@ private:
 public:
     bool begin(MQTTHelperClass * mqttHelper, int receivePin, int sendPin);
     void bind(AsyncWebServer * server);
-    void callback(char* topic, byte* message, unsigned int length);
+    void callback(const char* topic, const char* message);
     void poll();
 };
 
