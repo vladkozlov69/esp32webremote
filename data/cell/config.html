@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <title>CELL config</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="data:,">
+        <link rel="stylesheet" type="text/css" href="/style.css">
+    </head>
+    <body>
+        <div class="wrapper">
+            <p><a href="/"><button class="button btnhome">&lt; Home page</button></a></p>
+            <p>
+            <form action="/cell/save" method="POST">
+                <label for="SmtpHost">Smtp Host</label><br>
+                <input type="text" id="SmtpHost" name="SmtpHost" value="%SmtpHost%"><br>
+
+                <label for="SmtpPort">SmtpPort</label><br>
+                <input type="text" id="SmtpPort" name="SmtpPort" value="%SmtpPort%"><br>
+
+                <label for="SmtpUser">Smtp User</label><br>
+                <input type="text" id="SmtpUser" name="SmtpUser" value="%SmtpUser%"><br>
+
+                <label for="SmtpPass">Smtp Pass</label><br>
+                <input type="text" id="SmtpPass" name="SmtpPass" value="%SmtpPass%"><br>
+
+                <label for="APN">APN</label><br>
+                <input type="text" id="APN" name="APN" value="%APN%"><br>
+
+                <label for="CallTimeout">MQTT Topic Prefix</label><br>
+                <input type="text" id="CallTimeout" name="CallTimeout" value="%CallTimeout%"><br>
+
+                <input type="submit" class="button button1" value="Update config">
+            </form>
+            </p>
+            <p>
+                <form action="/reboot" method="POST">
+                    <button type="submit" class="button button2">Reboot</button>
+                </form>
+            </p>
+        </div>
+    </body>
+</html>

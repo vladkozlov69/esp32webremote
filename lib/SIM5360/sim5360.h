@@ -59,9 +59,10 @@ public:
 	SIM_RESULT hangup();
 	int getSignalLevel();
 	String sendData(const char * command, const int timeout);
+	int checkSmtpProgressStatus();
+	bool sendDataAndCheckOk(const char * command);
 private:
 	char * sendDataAndParseResponse(const char * command, const char * regex, int captureNumber, char * buf);
-	bool sendDataAndCheckOk(const char * command);
 	bool sendDataAndCheckPrompt(const char * command);
 	bool sendDataAndCheck(const char * command, const int timeout, const int wait, const char * expectedTail);
 };

@@ -82,8 +82,8 @@ void callback(char* topic, byte* message, unsigned int length)
         }
     }
 
-    RFPlugin.callback(topic, message, length);
-    CellPlugin.callback(topic, message, length);
+    RFPlugin.callback(topic, messageTemp.c_str());
+    CellPlugin.callback(topic, messageTemp.c_str());
 }
 
 void setup()

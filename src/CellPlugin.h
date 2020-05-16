@@ -18,6 +18,14 @@ class CellPluginClass
     unsigned long m_CallBeginTime = 0;
     bool m_CallInProgress = false;
     unsigned long m_CallTimeout;
+    unsigned long m_LastSmsPoll;
+    unsigned long m_LastStatusPoll;
+    bool m_EmailInProgress = false;
+    bool m_SimReady = false;
+    String m_SmtpHost;
+    int m_SmtpPort;
+    String m_SmtpUser;
+    String m_SmtpPass;
 private:
     static String processor(const String& var);
 public:

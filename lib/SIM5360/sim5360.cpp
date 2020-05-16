@@ -86,15 +86,26 @@ SIM_RESULT Sim5360::sendMail(const char * mailServer, int port,
 					sprintf(buf, "AT+CSMTPSSUB=%d, \"utf-8\"", strlen(subj));
 					if (sendDataAndCheckPrompt(buf))
 					{
-						m_Module->print(subj);
-						delay(100);
-						sprintf(buf, "AT+CSMTPSBODY=%d", strlen(body));
-						sendDataAndCheckPrompt(buf);
-						m_Module->print(body);
-						delay(100);
-						if (sendDataAndCheckOk("AT+CSMTPSSEND"))
+						if (sendDataAndCheckOk(subj))
 						{
-							return SIM_RESULT::OK;
+							Serial.println("|subj sent|");
+						}
+						//m_Module->print(subj);
+						delay(500);
+						sprintf(buf, "AT+CSMTPSBODY=%d", strlen(body));
+						if (sendDataAndCheckPrompt(buf))
+						{
+							if (sendDataAndCheckOk(body))
+							{
+								Serial.println("|body sent|");
+							}
+							///m_Module->print(body);
+							delay(500);
+							Serial.println("-----------");
+							if (sendDataAndCheckOk("AT+CSMTPSSEND"))
+							{
+								return SIM_RESULT::OK;
+							}
 						}
 					}
 				}
@@ -153,6 +164,17 @@ bool Sim5360::checkPacketStatus()
 	return false;
 }
 
+int Sim5360::checkSmtpProgressStatus()
+{
+	char buf[20];
+	if (sendDataAndParseResponse("AT+CSMTPSSEND?", "%+CSMTPSSEND: (%d)", 0, buf))
+	{
+		return atoi(buf);
+	}
+
+	return -1;
+}
+
 String Sim5360::getOperatorName()
 {
 	char buf[20];
@@ -192,7 +214,6 @@ int Sim5360::getActiveCallsCount()
 
 int Sim5360::getSmsMessages()
 {
-    
 	m_SmsMessages.free();
 
 	if (sendDataAndCheckOk("AT+CMGF=1"))
@@ -201,14 +222,40 @@ int Sim5360::getSmsMessages()
 		{
 			MatchState ms;
 			char buf[10];
+			unsigned int matchIndex = 0;
 			ms.Target((char *) (lastResult.c_str()));
+
+			while (true)
+  			{			
+    			if (ms.Match("%+CMGL: (%d+),", matchIndex) == REGEXP_MATCHED)
+    			{
+      				//Serial.println ("-----");
+      				//Serial.print ("Matched on: ");
+      				//Serial.println (ms.GetMatch (buf));
+      				//Serial.println ("Captures:");
+      				for (int j = 0; j < ms.level; j++)
+					{
+         				//Serial.println (ms.GetCapture (buf, j));
+						m_SmsMessages.add(atoi(ms.GetCapture(buf, j)));
+					}
+      				// move past matching string
+      				matchIndex = ms.MatchStart + ms.MatchLength;
+   				}  // end of match
+    			else
+      				break;  // no match or regexp error
+
+  			} // end of while
+
+
+			/*
 			if (ms.Match("%+CMGL: (%d+),") == REGEXP_MATCHED)
 			{
+				Serial.println(String("CMGL level ") + ms.level);
 				for (int i = 0; i < ms.level; i++)
 				{
 					m_SmsMessages.add(atoi(ms.GetCapture(buf, i)));
 				}
-			}
+			}*/
 		}
 	}
 
@@ -217,7 +264,7 @@ int Sim5360::getSmsMessages()
 
 SmsMessage Sim5360::getSmsMessage(int index)
 {
-	char buf[250];
+	char buf[300];
 	SmsMessage result;
 	sprintf(buf, "AT+CMGR=%d", index);
 	if (sendDataAndCheckOk(buf))
@@ -244,7 +291,7 @@ bool Sim5360::deleteSmsMessage(int index)
 
 bool Sim5360::sendDataAndCheckOk(const char * command)
 {
-	return sendDataAndCheck(command, 2000, 100, "\r\nOK\r\n");
+	return sendDataAndCheck(command, 5000, 300, "\r\nOK\r\n");
 }
 
 bool Sim5360::sendDataAndCheckPrompt(const char * command)
@@ -280,6 +327,7 @@ bool Sim5360::sendDataAndCheck(const char * command, const int timeout, const in
 {
 	lastResult = sendData(command, timeout);
 	delay(wait);
+	// Serial.println(String("[sendDataAndCheck:") + lastResult + "]");
 	return lastResult.endsWith(expectedTail);
 }
 
@@ -298,6 +346,7 @@ String Sim5360::sendData(const char * command, const int timeout)
 	unsigned long int time = millis();
 
 	bool responseEndDetected = false;
+	// m_DebugOut->print("[");
 	while((!responseEndDetected) && (time+timeout) > millis())
 	{
 		while((!responseEndDetected) && m_Module->available())
@@ -305,11 +354,17 @@ String Sim5360::sendData(const char * command, const int timeout)
 			char c = m_Module->read();
 			response += c;
 
+				if(m_DebugOut)
+	// {
+	// 	m_DebugOut->print(c);
+	// }
+
 			//Serial.print("|");Serial.print((int)c);Serial.print("|");Serial.print(c);
 
 			responseEndDetected = response.endsWith("\r\nOK\r\n") || response.endsWith("\r\nERROR\r\n");
 		}
 	}
+	// m_DebugOut->println("]");
 
 	if(m_DebugOut)
 	{

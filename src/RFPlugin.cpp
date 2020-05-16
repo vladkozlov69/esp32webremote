@@ -148,7 +148,7 @@ void RFPluginClass::bind(AsyncWebServer * server)
 void RFPluginClass::callback(const char* topic, const char * message)
 {
     MatchState ms;
-    ms.Target(topic);
+    ms.Target((char *)topic);
 
     if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/rc/(%d+)/command").c_str()))
     {
