@@ -34,6 +34,7 @@ public:
     void bind(AsyncWebServer * server);
     void publish(const char * subTopic, const char * data);
     void publish(const char * subTopic, const char * data, bool retain);
+    void publish_P(const char * subTopic, const char * data, bool retain);
     static void factoryReset(MQTTHelperClass * mqttHelper);
     bool poll();
     String getHost() {return m_MqttHost;}

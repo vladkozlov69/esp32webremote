@@ -91,6 +91,11 @@ void MQTTHelperClass::publish(const char * subTopic, const char * data, bool ret
     m_MqttClient->publish((m_MqttTopicPrefix + "/" + subTopic).c_str(), data, retain);
 }
 
+void MQTTHelperClass::publish_P(const char * subTopic, const char * data, bool retain)
+{
+    m_MqttClient->publish_P((m_MqttTopicPrefix + "/" + subTopic).c_str(), data, retain);
+}
+
 void MQTTHelperClass::reconnect()
 {
     // Loop until we're reconnected

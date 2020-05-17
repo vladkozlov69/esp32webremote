@@ -120,14 +120,14 @@ void CellPluginClass::callback(const char* topic, const char* message)
             SmsMessage message = m_Sim.getSmsMessage(msgSlot);
 
             Serial.println(String("body") + message.body);
-            doc["sender"] = message.sender.substring(0, 12);
-            doc["body"] = message.body.substring(0, 65);
+            doc["sender"] = message.sender;///.substring(0, 12);
+            doc["body"] = message.body;//.substring(0, 65);
             
             String resultJson;
             serializeJson(doc, resultJson);
 
             Serial.println(resultJson + " => " + resultJson.length());
-            m_MQTTHelper->publish((String("sms/") + msgSlot + "/read").c_str(), resultJson.c_str(), true);
+            m_MQTTHelper->publish_P((String("sms/") + msgSlot + "/read").c_str(), resultJson.c_str(), true);
         }
     }
 
