@@ -88,6 +88,7 @@ void callback(char* topic, byte* message, unsigned int length)
 
 void setup()
 {
+    delay(6000);
     // Serial port for debugging purposes
     Serial.begin(9600);
     Serial1.begin(115200, SERIAL_8N1, SERIAL1_RXPIN, SERIAL1_TXPIN);
@@ -105,9 +106,7 @@ void setup()
 
     dnsHelper.begin("esp32demo");
 
-    RFPlugin.begin(&MQTTHelper, RF_RECEIVE_PIN, RF_TRANSMIT_PIN);
 
-    CellPlugin.begin(&preferences, &MQTTHelper, &Serial1, &Serial);
 
     MQTTHelper.bind(&server);
     OTAHelper.bind(&server);
@@ -157,7 +156,9 @@ void setup()
 
     MQTTHelper.begin(&preferences, &dnsHelper, callback);
 
+    RFPlugin.begin(&MQTTHelper, RF_RECEIVE_PIN, RF_TRANSMIT_PIN);
 
+    CellPlugin.begin(&preferences, &MQTTHelper, &Serial1, &Serial);
     // pinMode(PWRKEY, OUTPUT);
     // digitalWrite(PWRKEY, HIGH);
   

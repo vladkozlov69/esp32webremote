@@ -117,6 +117,8 @@ void MQTTHelperClass::reconnect()
     }
 }
 
+
+
 bool MQTTHelperClass::poll()
 {
     if (!isValidIP(m_MqttHostIP))
@@ -126,11 +128,13 @@ bool MQTTHelperClass::poll()
 
     if (isValidIP(m_MqttHostIP) && !m_MqttClient->connected())
     {
+        m_IsConnected = false;
         reconnect();
     }
 
     if (isValidIP(m_MqttHostIP) && m_MqttClient->connected()) 
     {
+        m_IsConnected = true;
         m_MqttClient->loop();
     }
 }

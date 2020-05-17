@@ -33,6 +33,8 @@ bool CellPluginClass::begin(Preferences * preferences, MQTTHelperClass * mqttHel
         Serial.println("Sim module restarted");
     }
 
+    //m_MQTTHelper->publish("email/error/state", "0");
+
     m_LastSmsPoll = millis();
     m_LastStatusPoll = millis();
     m_LastSimInitPoll = millis();
@@ -135,6 +137,12 @@ void CellPluginClass::callback(const char* topic, const char* message)
 
     }
 
+    if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/email/reset/command").c_str()))
+    {
+        m_Sim.simReset();
+        m_SimReady = false;
+    }
+
     if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/email/send/command").c_str()))
     {
         if (m_Sim.checkRegistration() && m_Sim.checkPacketStatus())
@@ -210,6 +218,12 @@ void CellPluginClass::poll()
             break;
         }
 
+        if (m_LastEmailError > 0)
+        {
+            char buf[5];
+            m_MQTTHelper->publish("email/error/state", itoa(m_LastEmailError, buf, 10));
+        }
+
         m_LastEmailStatusPoll = millis();
     }
 
@@ -223,7 +237,6 @@ void CellPluginClass::poll()
         m_LastSmsPoll = millis();
     }
 
-
     // hangup call if exist on timeout
     if (!m_EmailInProgress && m_CallInProgress && (m_CallBeginTime > millis() || millis() - m_CallBeginTime > m_CallTimeout))
     {
@@ -235,7 +248,22 @@ void CellPluginClass::poll()
         m_CallInProgress = false;
     }
 
-    // TODO check modem status and send by MQTT
+    if (!m_EmailInProgress && (m_LastStatusPoll > millis() || millis() - m_LastStatusPoll > 15000))
+    {
+        if (m_MQTTHelper->isConnected())
+        {
+            StaticJsonDocument<192> doc;
+            doc["ns"] = m_Sim.checkRegistration();
+            doc["op"] = m_Sim.getOperatorName();
+            doc["sl"] = m_Sim.getSignalLevel();
+            doc["pc"] = m_Sim.checkPacketStatus();
+            doc["ee"] = m_LastEmailError;
+            String status;
+            serializeJson(doc, status);
+            m_MQTTHelper->publish("sim/poll/state", status.c_str());
+        }
+        m_LastStatusPoll = millis();
+    }
 }
 
 CellPluginClass CellPlugin;

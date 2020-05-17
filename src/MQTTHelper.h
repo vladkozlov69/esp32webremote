@@ -22,6 +22,7 @@ class MQTTHelperClass
     String m_MqttTopicPrefix;
     WiFiClient espClient;
     PubSubClient * m_MqttClient;
+    bool m_IsConnected = false;
     std::function<void(char*, uint8_t*, unsigned int)> m_Callback;
 private:
     static String processor(const String& var);
@@ -37,6 +38,7 @@ public:
     bool poll();
     String getHost() {return m_MqttHost;}
     String getTopicPrefix() {return m_MqttTopicPrefix;}
+    bool isConnected() { return m_IsConnected;}
 };
 
 extern MQTTHelperClass MQTTHelper;
