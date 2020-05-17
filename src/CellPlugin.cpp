@@ -21,15 +21,21 @@ bool CellPluginClass::begin(Preferences * preferences, MQTTHelperClass * mqttHel
     m_CallTimeout = m_Preferences->getLong("CallTimeout", 15000);
     m_APN = m_Preferences->getString("APN", "internet");
     m_SmtpHost = m_Preferences->getString("SmtpHost", "smtp.gmail.com");
-    m_SmtpPort = m_Preferences->getInt("SmtpPort", 495);
+    m_SmtpPort = m_Preferences->getInt("SmtpPort", 465);
     m_SmtpUser = m_Preferences->getString("SmtpUser");
     m_SmtpPass = m_Preferences->getString("SmtpPass");
     m_Preferences->end();
     
     m_Sim.begin(m_APN.c_str(), module, debugOut);
 
+    if (m_Sim.simReset())
+    {
+        Serial.println("Sim module restarted");
+    }
+
     m_LastSmsPoll = millis();
     m_LastStatusPoll = millis();
+    m_LastSimInitPoll = millis();
 
     return true;
 }
@@ -71,7 +77,7 @@ void CellPluginClass::callback(const char* topic, const char* message)
     if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/call/(%d+)/command").c_str()))
     {
         char buf [20]; 
-        Serial.print("GSM Call");
+        Serial.print("GSM Call:");
         Serial.println(ms.GetCapture(buf, 0)); // it's a number to call
         
         if (m_Sim.getActiveCallsCount() > 0)
@@ -105,13 +111,14 @@ void CellPluginClass::callback(const char* topic, const char* message)
 
         for(int i = 0; i < smsIndexes->length(); i++)
         {
-            StaticJsonDocument<4056> doc;
+            StaticJsonDocument<128> doc;
+
             int msgSlot = *(smsIndexes->nth(i));
             SmsMessage message = m_Sim.getSmsMessage(msgSlot);
 
             Serial.println(String("body") + message.body);
-            doc["sender"] = message.sender;
-            doc["body"] = message.body.substring(0, 50);
+            doc["sender"] = message.sender.substring(0, 12);
+            doc["body"] = message.body.substring(0, 65);
             
             String resultJson;
             serializeJson(doc, resultJson);
@@ -124,32 +131,43 @@ void CellPluginClass::callback(const char* topic, const char* message)
     if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/sms/delete/command").c_str()))
     {
         m_Sim.deleteSmsMessage(atoi(message));
+
     }
 
-    if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/sms/email/command").c_str()))
+    if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/email/send/command").c_str()))
     {
         if (m_Sim.checkRegistration() && m_Sim.checkPacketStatus())
         {
-            // TODO parse MQTT message here
-            m_EmailInProgress = true;
+            StaticJsonDocument<128> doc;
 
-            m_Sim.sendMail(m_SmtpHost.c_str(), m_SmtpPort,
-                m_SmtpUser.c_str(), m_SmtpPass.c_str(),
-                m_SmtpUser.c_str(), "vkozlov69@gmail.com",
-                "test", "again");
+            DeserializationError err = deserializeJson(doc, message);
 
+            if (DeserializationError::Ok == err)
+            {
+                m_EmailInProgress = true;
+
+                m_Sim.sendMail(m_SmtpHost.c_str(), m_SmtpPort,
+                    m_SmtpUser.c_str(), m_SmtpPass.c_str(),
+                    m_SmtpUser.c_str(), doc["addr"],
+                    doc["subj"], doc["body"]);
+            }
+            else
+            {
+                Serial.printf("Email MQTT deserialization error %d \r\n", err);
+            }
+            
         }
     }
 }
 
 void CellPluginClass::poll()
 {
-    if (!m_SimReady && (m_LastStatusPoll > millis() || millis() - m_LastStatusPoll > 5000))
+    if (!m_SimReady && (m_LastSimInitPoll > millis() || millis() - m_LastSimInitPoll > 5000))
     {
         if (!m_Sim.checkRegistration())
         {
             Serial.println("Waiting for SIM registration...");
-            m_LastStatusPoll = millis();
+            m_LastSimInitPoll = millis();
             return;
         }
         else
@@ -166,34 +184,36 @@ void CellPluginClass::poll()
             
         }
         
-        m_LastStatusPoll = millis();
+        m_LastSimInitPoll = millis();
     }
 
 
     if (m_EmailInProgress && (m_LastSmsPoll > millis() || millis() - m_LastSmsPoll > 2000))
     {
-        if (0 == m_Sim.checkSmtpProgressStatus())
+        int status = m_Sim.checkSmtpProgressStatus();
+        switch (status)
         {
+        case 0:
             m_EmailInProgress = false;
+            break;
+        case 1:
+            // check if busy > timeout
+            break;
+        default:
+            // it's error, store it as lastEmailError
+            break;
         }
 
         m_LastSmsPoll = millis();
     }
-
-    return;
 
     // check for SMS messages here
     if (!m_EmailInProgress && (m_LastSmsPoll > millis() || millis() - m_LastSmsPoll > 10000))
     {
         int smsCount = m_Sim.getSmsMessages();
         Serial.println(String("SMS Count:") + smsCount);
-
-        if (smsCount > 0)
-        {
-            char buf [20]; 
-            m_MQTTHelper->publish("sms/incoming/state", itoa(smsCount, buf, 10), true);
-        }
-
+        char buf [20]; 
+        m_MQTTHelper->publish("sms/incoming/state", itoa(smsCount, buf, 10), true);
         m_LastSmsPoll = millis();
     }
 

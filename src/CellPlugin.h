@@ -20,6 +20,7 @@ class CellPluginClass
     unsigned long m_CallTimeout;
     unsigned long m_LastSmsPoll;
     unsigned long m_LastStatusPoll;
+    unsigned long m_LastSimInitPoll;
     bool m_EmailInProgress = false;
     bool m_SimReady = false;
     String m_SmtpHost;
