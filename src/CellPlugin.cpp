@@ -36,6 +36,7 @@ bool CellPluginClass::begin(Preferences * preferences, MQTTHelperClass * mqttHel
     m_LastSmsPoll = millis();
     m_LastStatusPoll = millis();
     m_LastSimInitPoll = millis();
+    m_LastEmailStatusPoll = millis();
 
     return true;
 }
@@ -145,7 +146,8 @@ void CellPluginClass::callback(const char* topic, const char* message)
             if (DeserializationError::Ok == err)
             {
                 m_EmailInProgress = true;
-
+                m_EmailBusyCount = 0;
+                m_LastEmailError = 0;
                 m_Sim.sendMail(m_SmtpHost.c_str(), m_SmtpPort,
                     m_SmtpUser.c_str(), m_SmtpPass.c_str(),
                     m_SmtpUser.c_str(), doc["addr"],
@@ -188,7 +190,7 @@ void CellPluginClass::poll()
     }
 
 
-    if (m_EmailInProgress && (m_LastSmsPoll > millis() || millis() - m_LastSmsPoll > 2000))
+    if (m_EmailInProgress && (m_LastEmailStatusPoll > millis() || millis() - m_LastEmailStatusPoll > 2000))
     {
         int status = m_Sim.checkSmtpProgressStatus();
         switch (status)
@@ -197,14 +199,18 @@ void CellPluginClass::poll()
             m_EmailInProgress = false;
             break;
         case 1:
-            // check if busy > timeout
+            m_EmailBusyCount++;
+            if (m_EmailBusyCount > MAX_EMAIL_BUSY_COUNT_TIMEOUT)
+            {
+                m_LastEmailError = 1;
+            }
             break;
         default:
-            // it's error, store it as lastEmailError
+            m_LastEmailError = status;
             break;
         }
 
-        m_LastSmsPoll = millis();
+        m_LastEmailStatusPoll = millis();
     }
 
     // check for SMS messages here

@@ -9,6 +9,8 @@
 #include "SPIFFS.h"
 #include "MQTTHelper.h"
 
+#define MAX_EMAIL_BUSY_COUNT_TIMEOUT 10
+
 class CellPluginClass
 {
     Preferences * m_Preferences;
@@ -22,6 +24,9 @@ class CellPluginClass
     unsigned long m_LastStatusPoll;
     unsigned long m_LastSimInitPoll;
     bool m_EmailInProgress = false;
+    unsigned long m_LastEmailStatusPoll;
+    int m_EmailBusyCount;
+    int m_LastEmailError = 0;
     bool m_SimReady = false;
     String m_SmtpHost;
     int m_SmtpPort;
