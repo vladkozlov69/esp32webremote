@@ -50,6 +50,7 @@ public:
 	IntArray * getSmsIndexes() { return &m_SmsMessages; }
 	SmsMessage getSmsMessage(int index);
 	bool deleteSmsMessage(int index);
+	bool simReset();
 	SIM_RESULT sendSms(const char * recipient, const char * body);
 	SIM_RESULT inetConnect();
 	SIM_RESULT inetDisconnect();

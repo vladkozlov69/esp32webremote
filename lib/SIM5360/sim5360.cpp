@@ -12,6 +12,11 @@ void Sim5360::begin(const char * apnName, Stream * module, Stream * debugOut)
 	m_DebugOut = debugOut;
 }
 
+bool Sim5360::simReset()
+{
+	return sendDataAndCheckOk("AT+CRESET");
+}
+
 SIM_RESULT Sim5360::sendSms(const char * recipient, const char * body)
 {
 	if (sendDataAndCheckOk("AT+CMGF=1"))//Because we want to send the SMS in text mode
@@ -86,25 +91,17 @@ SIM_RESULT Sim5360::sendMail(const char * mailServer, int port,
 					sprintf(buf, "AT+CSMTPSSUB=%d, \"utf-8\"", strlen(subj));
 					if (sendDataAndCheckPrompt(buf))
 					{
-						if (sendDataAndCheckOk(subj))
-						{
-							Serial.println("|subj sent|");
-						}
-						//m_Module->print(subj);
-						delay(500);
+						sendDataAndCheckOk(subj);
+						
 						sprintf(buf, "AT+CSMTPSBODY=%d", strlen(body));
 						if (sendDataAndCheckPrompt(buf))
 						{
 							if (sendDataAndCheckOk(body))
 							{
-								Serial.println("|body sent|");
-							}
-							///m_Module->print(body);
-							delay(500);
-							Serial.println("-----------");
-							if (sendDataAndCheckOk("AT+CSMTPSSEND"))
-							{
-								return SIM_RESULT::OK;
+								if (sendDataAndCheckOk("AT+CSMTPSSEND"))
+								{
+									return SIM_RESULT::OK;
+								}
 							}
 						}
 					}
@@ -166,7 +163,7 @@ bool Sim5360::checkPacketStatus()
 
 int Sim5360::checkSmtpProgressStatus()
 {
-	char buf[20];
+	char buf[5];
 	if (sendDataAndParseResponse("AT+CSMTPSSEND?", "%+CSMTPSSEND: (%d)", 0, buf))
 	{
 		return atoi(buf);
@@ -177,7 +174,7 @@ int Sim5360::checkSmtpProgressStatus()
 
 String Sim5360::getOperatorName()
 {
-	char buf[20];
+	char buf[50];
 	if (sendDataAndParseResponse("AT+COPS?", "%+COPS: .*,\"([%w%s]+)\",", 0, buf))
 	{
 		return String(buf);
@@ -229,33 +226,19 @@ int Sim5360::getSmsMessages()
   			{			
     			if (ms.Match("%+CMGL: (%d+),", matchIndex) == REGEXP_MATCHED)
     			{
-      				//Serial.println ("-----");
-      				//Serial.print ("Matched on: ");
-      				//Serial.println (ms.GetMatch (buf));
-      				//Serial.println ("Captures:");
       				for (int j = 0; j < ms.level; j++)
 					{
-         				//Serial.println (ms.GetCapture (buf, j));
 						m_SmsMessages.add(atoi(ms.GetCapture(buf, j)));
 					}
       				// move past matching string
       				matchIndex = ms.MatchStart + ms.MatchLength;
-   				}  // end of match
+   				}  
     			else
-      				break;  // no match or regexp error
-
-  			} // end of while
-
-
-			/*
-			if (ms.Match("%+CMGL: (%d+),") == REGEXP_MATCHED)
-			{
-				Serial.println(String("CMGL level ") + ms.level);
-				for (int i = 0; i < ms.level; i++)
 				{
-					m_SmsMessages.add(atoi(ms.GetCapture(buf, i)));
+      				break;  // no match or regexp error
 				}
-			}*/
+
+  			}
 		}
 	}
 
@@ -291,21 +274,11 @@ bool Sim5360::deleteSmsMessage(int index)
 
 bool Sim5360::sendDataAndCheckOk(const char * command)
 {
-	return sendDataAndCheck(command, 5000, 300, "\r\nOK\r\n");
+	return sendDataAndCheck(command, 2000, 100, "\r\nOK\r\n");
 }
 
 bool Sim5360::sendDataAndCheckPrompt(const char * command)
 {
-//	lastResult = sendData(command, 2000);
-//	delay(100);
-//	Serial.println("-------");
-//	for (int i = 0; i < lastResult.length(); i++)
-//	{
-//		Serial.print((int)(lastResult.charAt(i)));
-//	}
-//	Serial.println();
-//	Serial.println("-------");
-
 	return sendDataAndCheck(command, 2000, 100, "\r\n>");
 }
 
@@ -327,7 +300,6 @@ bool Sim5360::sendDataAndCheck(const char * command, const int timeout, const in
 {
 	lastResult = sendData(command, timeout);
 	delay(wait);
-	// Serial.println(String("[sendDataAndCheck:") + lastResult + "]");
 	return lastResult.endsWith(expectedTail);
 }
 
@@ -346,25 +318,15 @@ String Sim5360::sendData(const char * command, const int timeout)
 	unsigned long int time = millis();
 
 	bool responseEndDetected = false;
-	// m_DebugOut->print("[");
 	while((!responseEndDetected) && (time+timeout) > millis())
 	{
 		while((!responseEndDetected) && m_Module->available())
 		{
 			char c = m_Module->read();
 			response += c;
-
-				if(m_DebugOut)
-	// {
-	// 	m_DebugOut->print(c);
-	// }
-
-			//Serial.print("|");Serial.print((int)c);Serial.print("|");Serial.print(c);
-
 			responseEndDetected = response.endsWith("\r\nOK\r\n") || response.endsWith("\r\nERROR\r\n");
 		}
 	}
-	// m_DebugOut->println("]");
 
 	if(m_DebugOut)
 	{
