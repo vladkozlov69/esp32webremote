@@ -88,12 +88,18 @@ void MQTTHelperClass::publish(const char * subTopic, const char * data)
 
 void MQTTHelperClass::publish(const char * subTopic, const char * data, bool retain)
 {
-    m_MqttClient->publish((m_MqttTopicPrefix + "/" + subTopic).c_str(), data, retain);
-}
+    int totalLength = MQTT_MAX_HEADER_SIZE + 3 + strlen(subTopic) + strlen(data) + m_MqttTopicPrefix.length();
 
-void MQTTHelperClass::publish_P(const char * subTopic, const char * data, bool retain)
-{
-    m_MqttClient->publish_P((m_MqttTopicPrefix + "/" + subTopic).c_str(), data, retain);
+    if (MQTT_MAX_PACKET_SIZE > totalLength)
+    {
+        m_MqttClient->publish((m_MqttTopicPrefix + "/" + subTopic).c_str(), data, retain);
+    }
+    else
+    {
+        m_MqttClient->beginPublish((m_MqttTopicPrefix + "/" + subTopic).c_str(), strlen(data), retain);
+        m_MqttClient->print(data);
+        m_MqttClient->endPublish();
+    }
 }
 
 void MQTTHelperClass::reconnect()

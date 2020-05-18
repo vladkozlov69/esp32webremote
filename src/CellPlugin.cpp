@@ -114,20 +114,19 @@ void CellPluginClass::callback(const char* topic, const char* message)
 
         for(int i = 0; i < smsIndexes->length(); i++)
         {
-            StaticJsonDocument<128> doc;
+            DynamicJsonDocument doc(2048);
 
             int msgSlot = *(smsIndexes->nth(i));
             SmsMessage message = m_Sim.getSmsMessage(msgSlot);
 
-            Serial.println(String("body") + message.body);
-            doc["sender"] = message.sender;///.substring(0, 12);
-            doc["body"] = message.body;//.substring(0, 65);
+            doc["sender"] = message.sender;
+            doc["body"] = message.body;
             
             String resultJson;
             serializeJson(doc, resultJson);
 
             Serial.println(resultJson + " => " + resultJson.length());
-            m_MQTTHelper->publish_P((String("sms/") + msgSlot + "/read").c_str(), resultJson.c_str(), true);
+            m_MQTTHelper->publish((String("sms/") + msgSlot + "/read").c_str(), resultJson.c_str(), true);
         }
     }
 
@@ -147,7 +146,7 @@ void CellPluginClass::callback(const char* topic, const char* message)
     {
         if (m_Sim.checkRegistration() && m_Sim.checkPacketStatus())
         {
-            StaticJsonDocument<128> doc;
+            StaticJsonDocument<256> doc;
 
             DeserializationError err = deserializeJson(doc, message);
 
