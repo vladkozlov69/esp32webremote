@@ -17,13 +17,14 @@ void APHelperClass::begin(Preferences * preferences)
     m_APPass = m_Preferences->getString("AP_Pass");
     m_Preferences->end();
 
-    // Now, start WiFi AP or connect
+    // Now, start WiFi AP
     if (m_APHost.length() == 0)
     {
         WiFi.softAP("esp32", "esp32admin");
-
         Serial.print("IP address: ");
         Serial.println(WiFi.softAPIP());
+        m_DnsServer = new DNSServer(); 
+        m_DnsServer->start(53, "*", WiFi.softAPIP());
     }
     else
     {
@@ -39,8 +40,18 @@ void APHelperClass::begin(Preferences * preferences)
     }
 }
 
+bool ON_AP_FILTER1(AsyncWebServerRequest *request) {
+  return WiFi.softAPIP() != request->client()->localIP();
+}
+
 void APHelperClass::bind(AsyncWebServer * server)
 {
+    if (m_APHost.length() == 0)
+    {
+        Serial.println("Added CaptiveRequestHandler");
+        server->addHandler(new CaptiveRequestHandler()).setFilter({ON_AP_FILTER});//only when requested from AP
+    }
+
     server->on("/ap/config", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         request->send(SPIFFS, "/ap/config.html", String(), false, processor);
@@ -78,5 +89,12 @@ void APHelperClass::factoryReset(APHelperClass * apHelper)
     apHelper->m_Preferences->end();
 }
 
+void APHelperClass::poll()
+{
+    if (m_DnsServer)
+    {
+        m_DnsServer->processNextRequest();
+    }
+}
 
 APHelperClass APHelper;

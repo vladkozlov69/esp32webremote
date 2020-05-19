@@ -88,10 +88,12 @@ void callback(char* topic, byte* message, unsigned int length)
 
 void setup()
 {
-    delay(6000);
     // Serial port for debugging purposes
     Serial.begin(9600);
     Serial1.begin(115200, SERIAL_8N1, SERIAL1_RXPIN, SERIAL1_TXPIN);
+
+    Serial.println("6 seconds waiting for USB firmware upgrade");
+    delay(6000);
 
     pinMode(ledPin, OUTPUT);
 
@@ -105,8 +107,6 @@ void setup()
     APHelper.begin(&preferences);
 
     dnsHelper.begin("esp32demo");
-
-
 
     MQTTHelper.bind(&server);
     OTAHelper.bind(&server);
@@ -155,71 +155,15 @@ void setup()
     server.begin();
 
     MQTTHelper.begin(&preferences, &dnsHelper, callback);
-
     RFPlugin.begin(&MQTTHelper, RF_RECEIVE_PIN, RF_TRANSMIT_PIN);
-
     CellPlugin.begin(&preferences, &MQTTHelper, &Serial1, &Serial);
-    // pinMode(PWRKEY, OUTPUT);
-    // digitalWrite(PWRKEY, HIGH);
-  
-    
-
-    // sim.begin("", &Serial1, NULL);
-
-    // simLastPoll = millis();
 }
  
 void loop()
 {
     if (OTAHelper.restartRequested()) ESP.restart();
+    APHelper.poll();
     MQTTHelper.poll();
     RFPlugin.poll();
     CellPlugin.poll();
-
-/*
-    if (millis() > pwrOff && pwrOff > 0)
-    {
-        pwrOff = 0;
-        Serial.println("Turning off");
-        digitalWrite(PWRKEY, LOW);
-        delay(2000);
-        digitalWrite(PWRKEY, HIGH);
-    }
-
-    if (millis() > pwrOn && pwrOn > 0)
-    {
-        Serial.println("Turning on");
-        pwrOn = 0;
-        digitalWrite(PWRKEY, LOW);
-        delay(250);
-        digitalWrite(PWRKEY, HIGH);
-    }
-*/
-/*
-    if (millis() - simLastPoll > 2000)
-    {
-        Serial.print("GSM Network status:"); Serial.println(sim.checkRegistration());    
-        Serial.print("GSM operator:"); Serial.println(sim.getOperatorName());
-        Serial.print("GSM signal level:"); Serial.println(sim.getSignalLevel());
-        Serial.print("Packet connection status:"); Serial.println(sim.checkPacketStatus());
-        Serial.print("Active calls:"); Serial.println(sim.getActiveCallsCount());
-        Serial.print("SMS messages:"); Serial.println(sim.getSmsMessages());
-
-        // LinkedList<int> * smsIndexes = sim.getSmsIndexes();
-
-        // for (int i = 0; i < smsIndexes->size(); i++)
-        // {
-        // SmsMessage msg = sim.getSmsMessage((*smsIndexes)[i]);
-        // Serial.print(msg.sender);
-        // Serial.print(" => ");
-        // Serial.println(msg.body);
-        // }
-
-    //    Serial.println(sim.sendData("AT+CMGF=1", 2000));
-    //    Serial.println(sim.sendData("AT+CMGL=\"ALL\"", 2000));
-    //    Serial.println(sim.sendData("AT+CMGR=0", 2000));
-    //    Serial.println(sim.sendData("AT+CMGD=0", 2000));
-        simLastPoll = millis();
-    }
-*/
 }

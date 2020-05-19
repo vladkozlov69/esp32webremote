@@ -5,18 +5,22 @@
 #include "ESPAsyncWebServer.h"
 #include "SPIFFS.h"
 #include <Preferences.h>
+#include "CaptiveRequestHandler.h"
 
 class APHelperClass
 {
     Preferences * m_Preferences;
     String m_APHost;
     String m_APPass;
+    bool m_CaptivePortalPassed = false;
+    DNSServer * m_DnsServer = NULL;
 private:
     static String processor(const String& var);
 public:
     void begin(Preferences * preferences);
     void bind(AsyncWebServer * server);
     static void factoryReset(APHelperClass * apHelper);
+    void poll();
 };
 
 extern APHelperClass APHelper;
