@@ -97,12 +97,16 @@ void setup()
 
     server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
     {
-        request->send(SPIFFS, "/style.css", "text/css");
+        AsyncWebServerResponse * response = request->beginResponse(SPIFFS, "/style.css", "text/css");
+        response->addHeader("Cache-Control", "max-age=3600");
+        request->send(response);
     });
 
     server.on("/jquery.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
     {
-        request->send(SPIFFS, "/jquery.min.js", "text/javascript");
+        AsyncWebServerResponse * response = request->beginResponse(SPIFFS, "/jquery.min.js", "text/javascript");
+        response->addHeader("Cache-Control", "max-age=3600");
+        request->send(response);
     });
 
     server.on("/reboot", HTTP_POST, [](AsyncWebServerRequest *request)
