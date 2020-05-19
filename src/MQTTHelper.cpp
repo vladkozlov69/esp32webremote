@@ -57,7 +57,7 @@ void MQTTHelperClass::bind(AsyncWebServer * server)
 {
     server->on("/mqtt/config", HTTP_GET, [](AsyncWebServerRequest *request)
     {
-        request->send(SPIFFS, "/mqtt/config.html", String(), false, processor);
+        request->send(SPIFFS, "/mqtt/config.html", "text/html", false, processor);
     });
 
     server->on("/mqtt/factory", HTTP_POST, [](AsyncWebServerRequest *request)
@@ -102,10 +102,10 @@ void MQTTHelperClass::publish(const char * subTopic, const char * data, bool ret
     }
 }
 
-void MQTTHelperClass::reconnect()
+void MQTTHelperClass::tryConnect()
 {
     // Loop until we're reconnected
-    while (!m_MqttClient->connected()) 
+    if (millis() - m_LastReconnectRetry > 5000)
     {
         Serial.print("Attempting MQTT connection...");
         // Attempt to connect
@@ -122,8 +122,7 @@ void MQTTHelperClass::reconnect()
             Serial.print("failed, rc=");
             Serial.print(m_MqttClient->state());
             Serial.println(" try again in 5 seconds");
-            // Wait 5 seconds before retrying
-            delay(5000);
+            m_LastReconnectRetry = millis();
         }
     }
 }
@@ -132,6 +131,7 @@ void MQTTHelperClass::reconnect()
 
 bool MQTTHelperClass::poll()
 {
+    // TODO make this unblocking
     if (!isValidIP(m_MqttHostIP))
     {
         setServer(m_MqttHost);
@@ -140,7 +140,7 @@ bool MQTTHelperClass::poll()
     if (isValidIP(m_MqttHostIP) && !m_MqttClient->connected())
     {
         m_IsConnected = false;
-        reconnect();
+        tryConnect();
     }
 
     if (isValidIP(m_MqttHostIP) && m_MqttClient->connected()) 

@@ -23,11 +23,6 @@ RF Receive Module data pin	27(26)	-
 RF Send Module data pin	-	12
 */
 
-// Set LED GPIO
-const int ledPin = 2;
-// Stores LED state
-String ledState;
-
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
@@ -38,17 +33,9 @@ MDNSHelper dnsHelper;
 #define SERIAL1_TXPIN 32
 #define PWRKEY 14
 
-unsigned long simLastPoll;
-Sim5360 sim;
-
-int pwrOff = 15000;
-int pwrOn = 30000;
-
 // Replaces placeholder with LED state value
 String processor(const String& var)
 {
-    if(var == "STATE") return digitalRead(ledPin) ? "ON" : "OFF";
-
     return String();
 }
  
@@ -67,23 +54,13 @@ void callback(char* topic, byte* message, unsigned int length)
 
     Serial.println();
 
-    if (String(topic) == "esp32/command") 
-    {
-        Serial.print("Changing output to ");
-        if(messageTemp == "on")
-        {
-            Serial.println("on");
-            digitalWrite(ledPin, HIGH);
-        }
-        else if(messageTemp == "off")
-        {
-            Serial.println("off");
-            digitalWrite(ledPin, LOW);
-        }
-    }
-
     RFPlugin.callback(topic, messageTemp.c_str());
     CellPlugin.callback(topic, messageTemp.c_str());
+}
+
+void notFound(AsyncWebServerRequest *request) 
+{
+    request->send(404, "text/plain", "Not found");
 }
 
 void setup()
@@ -94,8 +71,6 @@ void setup()
 
     Serial.println("6 seconds waiting for USB firmware upgrade");
     delay(6000);
-
-    pinMode(ledPin, OUTPUT);
 
     // Initialize SPIFFS
     if(!SPIFFS.begin(false))
@@ -120,22 +95,6 @@ void setup()
         request->send(SPIFFS, "/index.html", String(), false, processor);
     });
 
-    // Route to set GPIO to HIGH
-    server.on("/on", HTTP_GET, [](AsyncWebServerRequest *request)
-    {
-        digitalWrite(ledPin, HIGH);   
-        MQTTHelper.publish("state", "1"); 
-        request->send(SPIFFS, "/index.html", String(), false, processor);
-    });
-
-    // Route to set GPIO to LOW
-    server.on("/off", HTTP_GET, [](AsyncWebServerRequest *request)
-    {
-        digitalWrite(ledPin, LOW);  
-        MQTTHelper.publish("state", "0"); 
-        request->send(SPIFFS, "/index.html", String(), false, processor);
-    });
-
     server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         request->send(SPIFFS, "/style.css", "text/css");
@@ -150,6 +109,8 @@ void setup()
     {
         ESP.restart();
     });
+
+    server.onNotFound(notFound);
 
     // Start server
     server.begin();

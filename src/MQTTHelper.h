@@ -22,10 +22,11 @@ class MQTTHelperClass
     WiFiClient espClient;
     PubSubClient * m_MqttClient;
     bool m_IsConnected = false;
+    unsigned long m_LastReconnectRetry = 0;
     std::function<void(char*, uint8_t*, unsigned int)> m_Callback;
 private:
     static String processor(const String& var);
-    void reconnect();
+    void tryConnect();
     bool setServer(const String& hostname);
     bool isValidIP(const String& ipAddr);
 public:

@@ -54,7 +54,7 @@ void APHelperClass::bind(AsyncWebServer * server)
 
     server->on("/ap/config", HTTP_GET, [](AsyncWebServerRequest *request)
     {
-        request->send(SPIFFS, "/ap/config.html", String(), false, processor);
+        request->send(SPIFFS, "/ap/config.html", "text/html", false, processor);
     });
 
     server->on("/ap/factory", HTTP_POST, [](AsyncWebServerRequest *request)

@@ -83,7 +83,7 @@ void RFPluginClass::bind(AsyncWebServer * server)
 {
     server->on("/rf/index", HTTP_GET, [](AsyncWebServerRequest *request)
     {
-        request->send(SPIFFS, "/rf/index.html", String(), false, processor);
+        request->send(SPIFFS, "/rf/index.html", "text/html", false, processor);
     });
 
     server->on("/rf/list.json", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -115,7 +115,7 @@ void RFPluginClass::bind(AsyncWebServer * server)
     server->on("/rf/register", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         RFPlugin.enterRegistrationMode();
-        request->send(SPIFFS, "/rf/register.html", String(), false, processor);
+        request->send(SPIFFS, "/rf/register.html", "text/html", false, processor);
     });
 
     server->on("/rf/cancel", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -136,12 +136,12 @@ void RFPluginClass::bind(AsyncWebServer * server)
 
         RFPlugin.exitRegistrationMode();
 
-        request->send(SPIFFS, "/rf/confirm.html", String(), false, processor);
+        request->send(SPIFFS, "/rf/confirm.html", "text/html", false, processor);
     });
 
     server->on("/rf/state.json", HTTP_GET, [](AsyncWebServerRequest *request)
     {
-        request->send(SPIFFS, "/rf/state.json", String(), false, processor);
+        request->send(SPIFFS, "/rf/state.json", "application/json", false, processor);
     });
 }
 

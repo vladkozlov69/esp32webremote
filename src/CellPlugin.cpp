@@ -47,7 +47,7 @@ void CellPluginClass::bind(AsyncWebServer * server)
 {
     server->on("/cell/index", HTTP_GET, [](AsyncWebServerRequest *request)
     {
-        request->send(SPIFFS, "/cell/config.html", String(), false, processor);
+        request->send(SPIFFS, "/cell/config.html", "text/html", false, processor);
     });
 
     server->on("/cell/save", HTTP_POST, [](AsyncWebServerRequest *request)
