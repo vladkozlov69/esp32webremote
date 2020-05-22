@@ -110,12 +110,14 @@ void MQTTHelperClass::tryConnect()
         Serial.print("Attempting MQTT connection...");
         // Attempt to connect
         m_MqttClient->setServer(m_MqttHostIP.c_str(), 1883);
-        if (m_MqttClient->connect(WiFi.macAddress().c_str())) 
+        if (m_MqttClient->connect(WiFi.macAddress().c_str(), 
+            (m_MqttTopicPrefix + "/status").c_str(), 0, true, "offline")) 
         {
             Serial.println("connected");
             // Subscribe
             m_MqttClient->subscribe((m_MqttTopicPrefix + "/+/+/command").c_str());
             m_MqttClient->subscribe((m_MqttTopicPrefix + "/+/command").c_str());
+            m_MqttClient->publish((m_MqttTopicPrefix + "/status").c_str(), "online", true);
         } 
         else 
         {
