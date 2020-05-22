@@ -12,6 +12,11 @@ void Sim5360::begin(const char * apnName, Stream * module, Stream * debugOut)
 	m_DebugOut = debugOut;
 }
 
+bool Sim5360::checkSimPresent()
+{
+	return sendDataAndCheckOk("AT+CSPN?");
+}
+
 bool Sim5360::simReset()
 {
 	return sendDataAndCheckOk("AT+CRESET");

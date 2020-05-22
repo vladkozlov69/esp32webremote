@@ -42,6 +42,7 @@ class Sim5360
 public:
 	Sim5360();
 	void begin(const char * apnName, Stream * module, Stream * debugOut);
+	bool checkSimPresent();
 	bool checkRegistration();
 	String getOperatorName();
 	bool checkPacketStatus();
