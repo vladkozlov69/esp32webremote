@@ -12,9 +12,10 @@ void Sim5360::begin(const char * apnName, Stream * module, Stream * debugOut)
 	m_DebugOut = debugOut;
 }
 
-bool Sim5360::checkSimPresent()
+bool Sim5360::checkSimPresence()
 {
-	return sendDataAndCheckOk("AT+CSPN?");
+	// in case of SIM error, module returns "+CME ERROR: SIM failure". "OK" otherwise
+	return sendDataAndCheckOk("AT+CPIN?");
 }
 
 bool Sim5360::simReset()

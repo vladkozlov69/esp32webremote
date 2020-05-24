@@ -251,7 +251,9 @@ void CellPluginClass::poll()
     {
         if (m_MQTTHelper->isConnected())
         {
-            StaticJsonDocument<192> doc;
+            Serial.println("Checking SIM module status...");
+            StaticJsonDocument<512> doc;
+            doc["ss"] = m_Sim.checkSimPresence();
             doc["ns"] = m_Sim.checkRegistration();
             doc["op"] = m_Sim.getOperatorName();
             doc["sl"] = m_Sim.getSignalLevel();

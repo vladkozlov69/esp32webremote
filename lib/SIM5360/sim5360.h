@@ -9,15 +9,6 @@ class IntArray : public LinkedList<int> {
 public:
   
   IntArray() : LinkedList(nullptr) {}
-  
-//   bool containsIgnoreCase(const String& str){
-//     for (const auto& s : *this) {
-//       if (str.equalsIgnoreCase(s)) {
-//         return true;
-//       }
-//     }
-//     return false;
-//   }
 };
 
 enum class SIM_RESULT
@@ -42,7 +33,7 @@ class Sim5360
 public:
 	Sim5360();
 	void begin(const char * apnName, Stream * module, Stream * debugOut);
-	bool checkSimPresent();
+	bool checkSimPresence();
 	bool checkRegistration();
 	String getOperatorName();
 	bool checkPacketStatus();

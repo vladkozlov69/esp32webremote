@@ -88,6 +88,8 @@ void MQTTHelperClass::publish(const char * subTopic, const char * data)
 
 void MQTTHelperClass::publish(const char * subTopic, const char * data, bool retain)
 {
+    Serial.printf("Publish: [%s] <= [%s]\n", subTopic, data);
+
     int totalLength = MQTT_MAX_HEADER_SIZE + 3 + strlen(subTopic) + strlen(data) + m_MqttTopicPrefix.length();
 
     if (MQTT_MAX_PACKET_SIZE > totalLength)
