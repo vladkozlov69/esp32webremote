@@ -1,22 +1,24 @@
 #include "MDNSHelper.h"
 
 
-bool MDNSHelper::begin(const char * localHostName)
+bool MDNSHelper::begin(const char * localHostName, Stream * logger)
 {
+    m_Logger = logger;
+
     if (!MDNS.begin(localHostName)) 
     {
 #ifdef MDNSHELPER_DEBUG
-        Serial.println("Error setting up MDNS responder!");
+        m_Logger->println("Error setting up MDNS responder!");
 #endif
         return false;
     } 
 #ifdef MDNSHELPER_DEBUG
     else 
     {
-        Serial.println("Finished intitializing the MDNS client...");
+        m_Logger->println("Finished intitializing the MDNS client...");
     }
 
-    Serial.println("mDNS responder started");
+    m_Logger->println("mDNS responder started");
 #endif
 
     return true;
@@ -29,7 +31,7 @@ String MDNSHelper::resolve(const char * remoteHostName)
     while (serverIp.toString() == "0.0.0.0" && counter > 0) 
     {
 #ifdef MDNSHELPER_DEBUG
-        Serial.println("Trying again to resolve mDNS");
+        m_Logger->println("Trying again to resolve mDNS");
 #endif
         delay(250);
         counter--;
@@ -37,10 +39,10 @@ String MDNSHelper::resolve(const char * remoteHostName)
     }
 
 #ifdef MDNSHELPER_DEBUG
-    Serial.print("Resolved:");
-    Serial.print(remoteHostName);
-    Serial.print(" => ");
-    Serial.println(serverIp.toString());
+    m_Logger->print("Resolved:");
+    m_Logger->print(remoteHostName);
+    m_Logger->print(" => ");
+    m_Logger->println(serverIp.toString());
 #endif
 
     return serverIp.toString();

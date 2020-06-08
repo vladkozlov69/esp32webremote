@@ -17,13 +17,14 @@ class RFPluginClass
     bool m_SensorRegisterMode = false;
     unsigned long m_RegisteredSensorId = 0;
     unsigned long m_RegisterModeStart = 0;
+    Stream * m_Logger = NULL;
 private:
     static String processor(const String& var);
     String getSensorsJson(RFPluginClass * rfPlugin);
     void enterRegistrationMode();
     void exitRegistrationMode();
 public:
-    bool begin(MQTTHelperClass * mqttHelper, int receivePin, int sendPin);
+    bool begin(MQTTHelperClass * mqttHelper, int receivePin, int sendPin, Stream * logger);
     void bind(AsyncWebServer * server);
     void callback(const char* topic, const char* message);
     void poll();

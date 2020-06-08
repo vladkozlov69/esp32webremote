@@ -14,10 +14,11 @@ class APHelperClass
     String m_APPass;
     bool m_CaptivePortalPassed = false;
     DNSServer * m_DnsServer = NULL;
+    Stream * m_Logger = NULL;
 private:
     static String processor(const String& var);
 public:
-    void begin(Preferences * preferences);
+    void begin(Preferences * preferences, Stream * logger);
     void bind(AsyncWebServer * server);
     static void factoryReset(APHelperClass * apHelper);
     void poll();

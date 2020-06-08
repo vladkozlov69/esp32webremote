@@ -32,6 +32,7 @@ class CellPluginClass
     int m_SmtpPort;
     String m_SmtpUser;
     String m_SmtpPass;
+    Stream * m_Logger = NULL;
 private:
     static String processor(const String& var);
 public:

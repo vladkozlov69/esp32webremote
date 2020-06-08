@@ -8,8 +8,9 @@ String APHelperClass::processor(const String& var)
     return String();
 }
 
-void APHelperClass::begin(Preferences * preferences)
+void APHelperClass::begin(Preferences * preferences, Stream * logger)
 {
+    m_Logger = logger;
     m_Preferences = preferences;
 
     m_Preferences->begin("ap", false);
@@ -21,8 +22,8 @@ void APHelperClass::begin(Preferences * preferences)
     if (m_APHost.length() == 0)
     {
         WiFi.softAP("esp32", "esp32admin");
-        Serial.print("IP address: ");
-        Serial.println(WiFi.softAPIP());
+        m_Logger->print("IP address: ");
+        m_Logger->println(WiFi.softAPIP());
         m_DnsServer = new DNSServer(); 
         m_DnsServer->start(53, "*", WiFi.softAPIP());
     }
@@ -33,10 +34,10 @@ void APHelperClass::begin(Preferences * preferences)
         while (WiFi.status() != WL_CONNECTED) 
         {
             delay(1000);
-            Serial.println("Connecting to WiFi..");
+            m_Logger->println("Connecting to WiFi..");
         }
         // Print ESP32 Local IP Address
-        Serial.println(WiFi.localIP());
+        m_Logger->println(WiFi.localIP());
     }
 }
 
@@ -48,7 +49,7 @@ void APHelperClass::bind(AsyncWebServer * server)
 {
     if (m_APHost.length() == 0)
     {
-        Serial.println("Added CaptiveRequestHandler");
+        m_Logger->println("Added CaptiveRequestHandler");
         server->addHandler(new CaptiveRequestHandler()).setFilter({ON_AP_FILTER});//only when requested from AP
     }
 

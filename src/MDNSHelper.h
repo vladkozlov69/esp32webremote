@@ -6,9 +6,9 @@
 class MDNSHelper
 {
 private:
-    /* data */
+    Stream * m_Logger = NULL;
 public:
-    bool begin(const char * localHostName);
+    bool begin(const char * localHostName, Stream * logger);
     String resolve(const char * remoteHostName);
 };
 

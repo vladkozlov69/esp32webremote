@@ -1,10 +1,11 @@
 #include "MQTTHelper.h"
 
-void MQTTHelperClass::begin(Preferences * preferences, MDNSHelper * dnsHelper, MQTT_CALLBACK_SIGNATURE)
+void MQTTHelperClass::begin(Preferences * preferences, MDNSHelper * dnsHelper, Stream * logger, MQTT_CALLBACK_SIGNATURE)
 {
     m_Preferences = preferences;
     m_DnsHelper = dnsHelper;
     m_Callback = callback;
+    m_Logger = logger;
 
     m_Preferences->begin("mqtt", false);
     m_MqttHost = m_Preferences->getString("mqttServer", MQTT_HOST_DEFAULT);
@@ -17,7 +18,7 @@ void MQTTHelperClass::begin(Preferences * preferences, MDNSHelper * dnsHelper, M
     setServer(m_MqttHost);
 
 #ifdef MQTTHELPER_DEBUG
-    Serial.println("MQTT Config done");
+    m_Logger->println("MQTT Config done");
 #endif
 }
 
@@ -29,16 +30,16 @@ bool MQTTHelperClass::setServer(const String& hostname)
     {
         m_MqttHostIP = mqtt_ip;
 #ifdef MQTTHELPER_DEBUG
-        Serial.print("Setting MQTT IP:");
-        Serial.println(mqtt_ip);
+        m_Logger->print("Setting MQTT IP:");
+        m_Logger->println(mqtt_ip);
 #endif
         m_MqttClient->setServer(mqtt_ip.c_str(), 1883);
 #ifdef MQTTHELPER_DEBUG
-        Serial.print("Setting callback... ");
+        m_Logger->print("Setting callback... ");
 #endif
         m_MqttClient->setCallback(m_Callback);
 #ifdef MQTTHELPER_DEBUG
-        Serial.println(" - OK");
+        m_Logger->println(" - OK");
 #endif
     }
 }
@@ -98,7 +99,7 @@ void MQTTHelperClass::publish(const char * subTopic, const char * data)
 void MQTTHelperClass::publish(const char * subTopic, const char * data, bool retain)
 {
 #ifdef MQTTHELPER_DEBUG
-    Serial.printf("Publish: [%s] <= [%s]\n", subTopic, data);
+    m_Logger->printf("Publish: [%s] <= [%s]\n", subTopic, data);
 #endif
 
     int totalLength = MQTT_MAX_HEADER_SIZE + 3 + strlen(subTopic) + strlen(data) + m_MqttTopicPrefix.length();
@@ -121,14 +122,14 @@ void MQTTHelperClass::tryConnect()
     if (millis() - m_LastReconnectRetry > 5000)
     {
 #ifdef MQTTHELPER_DEBUG
-        Serial.print("Attempting MQTT connection...");
+        m_Logger->print("Attempting MQTT connection...");
 #endif
         // Attempt to connect
         m_MqttClient->setServer(m_MqttHostIP.c_str(), 1883);
         if (m_MqttClient->connect(WiFi.macAddress().c_str(), 
             (m_MqttTopicPrefix + "/status").c_str(), 0, true, "offline")) 
         {
-            Serial.println("MQTT connected");
+            m_Logger->println("MQTT connected");
             // Subscribe
             m_MqttClient->subscribe((m_MqttTopicPrefix + "/+/+/command").c_str());
             m_MqttClient->subscribe((m_MqttTopicPrefix + "/+/command").c_str());
@@ -136,9 +137,9 @@ void MQTTHelperClass::tryConnect()
         } 
         else 
         {
-            Serial.print("failed, rc=");
-            Serial.print(m_MqttClient->state());
-            Serial.println(" try again in 5 seconds");
+            m_Logger->print("failed, rc=");
+            m_Logger->print(m_MqttClient->state());
+            m_Logger->println(" try again in 5 seconds");
             m_LastReconnectRetry = millis();
         }
     }

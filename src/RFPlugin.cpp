@@ -26,16 +26,17 @@ String RFPluginClass::getSensorsJson(RFPluginClass * rfPlugin)
     return resultJson;
 }
 
-bool RFPluginClass::begin(MQTTHelperClass * mqttHelper, int receivePin, int sendPin)
+bool RFPluginClass::begin(MQTTHelperClass * mqttHelper, int receivePin, int sendPin, Stream * logger)
 {
     m_MQTTHelper = mqttHelper;
     m_RCSwitch.enableTransmit(sendPin);
     m_RCSwitch.enableReceive(receivePin);
+    m_Logger = logger;
 
     File file = SPIFFS.open("/config/rf.json", "r");
     if (!file)
     {
-        Serial.println("No RF ACL defined");
+        m_Logger->println("No RF ACL defined");
     } 
     else 
     {
@@ -54,7 +55,7 @@ bool RFPluginClass::begin(MQTTHelperClass * mqttHelper, int receivePin, int send
         }
         else
         {
-            Serial.print(String("RF config Deserialization error ") + result.c_str());
+            m_Logger->print(String("RF config Deserialization error ") + result.c_str());
 
             return false;
         }
@@ -154,8 +155,8 @@ void RFPluginClass::callback(const char* topic, const char * message)
     {
         char buf [20]; 
 #ifdef RFPLUGIN_DEBUG
-        Serial.print("RC Transmit");
-        Serial.println(ms.GetCapture(buf, 0));
+        m_Logger->print("RC Transmit");
+        m_Logger->println(ms.GetCapture(buf, 0));
 #endif
         m_RCSwitch.send(atol(buf), 24);
     }
@@ -168,7 +169,7 @@ void RFPluginClass::poll()
         (m_RegisterModeStart > millis() || millis() - m_RegisterModeStart > 30000))
     {
         exitRegistrationMode();
-        Serial.println("Sensor registration timeout");
+        m_Logger->println("Sensor registration timeout");
     }
 
     if (m_RCSwitch.available()) 
@@ -176,7 +177,7 @@ void RFPluginClass::poll()
         long receivedValue = m_RCSwitch.getReceivedValue();
 
 #ifdef RFPLUGIN_DEBUG
-        Serial.print("Received "); Serial.println(m_RCSwitch.getReceivedValue());
+        m_Logger->print("Received "); m_Logger->println(m_RCSwitch.getReceivedValue());
 #endif
 
         if (m_SensorRegisterMode)

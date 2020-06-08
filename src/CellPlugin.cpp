@@ -16,6 +16,7 @@ bool CellPluginClass::begin(Preferences * preferences, MQTTHelperClass * mqttHel
 {
     m_Preferences = preferences;
     m_MQTTHelper = mqttHelper;
+    m_Logger = debugOut;
 
     m_Preferences->begin("cell");
     m_CallTimeout = m_Preferences->getLong("CallTimeout", 15000);
@@ -30,10 +31,12 @@ bool CellPluginClass::begin(Preferences * preferences, MQTTHelperClass * mqttHel
 
     if (m_Sim.simReset())
     {
-        Serial.println("Sim module restarted");
+#ifdef CELLPLUGIN_DEBUG
+        m_Logger->println("Sim module restarted");
+#endif
     }
 
-    //m_MQTTHelper->publish("email/error/state", "0");
+    m_MQTTHelper->publish("email/error/state", "0");
 
     m_LastSmsPoll = millis();
     m_LastStatusPoll = millis();
@@ -80,9 +83,10 @@ void CellPluginClass::callback(const char* topic, const char* message)
     if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/call/(%d+)/command").c_str()))
     {
         char buf [20]; 
-        Serial.print("GSM Call:");
-        Serial.println(ms.GetCapture(buf, 0)); // it's a number to call
-        
+#ifdef CELLPLUGIN_DEBUG
+        m_Logger->print("GSM Call:");
+        m_Logger->println(ms.GetCapture(buf, 0)); // it's a number to call
+#endif        
         if (m_Sim.getActiveCallsCount() > 0)
         {
             m_Sim.hangup();
@@ -96,9 +100,10 @@ void CellPluginClass::callback(const char* topic, const char* message)
     if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/sms/(%d+)/command").c_str()))
     {
         char buf [20]; 
-        Serial.print("SMS Send");
-        Serial.println(ms.GetCapture(buf, 0)); // it's a number send SMS to
-
+#ifdef CELLPLUGIN_DEBUG        
+        m_Logger->print("SMS Send");
+        m_Logger->println(ms.GetCapture(buf, 0)); // it's a number send SMS to
+#endif
         if (m_Sim.getActiveCallsCount() > 0)
         {
             m_Sim.hangup();
@@ -124,8 +129,9 @@ void CellPluginClass::callback(const char* topic, const char* message)
             
             String resultJson;
             serializeJson(doc, resultJson);
-
-            Serial.println(resultJson + " => " + resultJson.length());
+#ifdef CELLPLUGIN_DEBUG
+            m_Logger->println(resultJson + " => " + resultJson.length());
+#endif            
             m_MQTTHelper->publish((String("sms/") + msgSlot + "/read").c_str(), resultJson.c_str(), true);
         }
     }
@@ -162,7 +168,7 @@ void CellPluginClass::callback(const char* topic, const char* message)
             }
             else
             {
-                Serial.printf("Email MQTT deserialization error %d \r\n", err);
+                m_Logger->printf("Email MQTT deserialization error %d \r\n", err);
             }
             
         }
@@ -175,7 +181,7 @@ void CellPluginClass::poll()
     {
         if (!m_Sim.checkRegistration())
         {
-            Serial.println("Waiting for SIM registration...");
+            m_Logger->println("Waiting for SIM registration...");
             m_LastSimInitPoll = millis();
             return;
         }
@@ -230,7 +236,7 @@ void CellPluginClass::poll()
     if (!m_EmailInProgress && (m_LastSmsPoll > millis() || millis() - m_LastSmsPoll > 10000))
     {
         int smsCount = m_Sim.getSmsMessages();
-        Serial.println(String("SMS Count:") + smsCount);
+        m_Logger->println(String("SMS Count:") + smsCount);
         char buf [20]; 
         m_MQTTHelper->publish("sms/incoming/state", itoa(smsCount, buf, 10), true);
         m_LastSmsPoll = millis();
@@ -251,7 +257,9 @@ void CellPluginClass::poll()
     {
         if (m_MQTTHelper->isConnected())
         {
-            Serial.println("Checking SIM module status...");
+#ifdef CELLPLUGIN_DEBUG
+            m_Logger->println("Checking SIM module status...");
+#endif
             StaticJsonDocument<512> doc;
             doc["ss"] = m_Sim.checkSimPresence();
             doc["ns"] = m_Sim.checkRegistration();

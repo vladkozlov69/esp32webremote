@@ -14,6 +14,7 @@
 #include <ArduinoJson.h>
 #include <StringArray.h>
 #include <CellPlugin.h>
+#include "LoggerStream.h"
 
 
 #define RF_TRANSMIT_PIN 12
@@ -28,6 +29,8 @@ AsyncWebServer server(80);
 
 Preferences preferences;
 MDNSHelper dnsHelper;
+
+LoggerStream LOG(&Serial);
 
 #define SERIAL1_RXPIN 33
 #define SERIAL1_TXPIN 32
@@ -79,9 +82,9 @@ void setup()
         return;
     }
 
-    APHelper.begin(&preferences);
+    APHelper.begin(&preferences, &LOG);
 
-    dnsHelper.begin("esp32demo");
+    dnsHelper.begin("esp32demo", &LOG);
 
     MQTTHelper.bind(&server);
     OTAHelper.bind(&server);
@@ -119,9 +122,9 @@ void setup()
     // Start server
     server.begin();
 
-    MQTTHelper.begin(&preferences, &dnsHelper, callback);
-    RFPlugin.begin(&MQTTHelper, RF_RECEIVE_PIN, RF_TRANSMIT_PIN);
-    CellPlugin.begin(&preferences, &MQTTHelper, &Serial1, &Serial);
+    MQTTHelper.begin(&preferences, &dnsHelper, &LOG, callback);
+    RFPlugin.begin(&MQTTHelper, RF_RECEIVE_PIN, RF_TRANSMIT_PIN, &LOG);
+    CellPlugin.begin(&preferences, &MQTTHelper, &Serial1, &LOG);
 }
  
 void loop()

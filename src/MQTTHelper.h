@@ -24,13 +24,14 @@ class MQTTHelperClass
     bool m_IsConnected = false;
     unsigned long m_LastReconnectRetry = 0;
     std::function<void(char*, uint8_t*, unsigned int)> m_Callback;
+    Stream * m_Logger = NULL;
 private:
     static String processor(const String& var);
     void tryConnect();
     bool setServer(const String& hostname);
     bool isValidIP(const String& ipAddr);
 public:
-    void begin(Preferences * preferences, MDNSHelper * dnsHelper, MQTT_CALLBACK_SIGNATURE);
+    void begin(Preferences * preferences, MDNSHelper * dnsHelper, Stream * logger, MQTT_CALLBACK_SIGNATURE);
     void bind(AsyncWebServer * server);
     void publish(const char * subTopic, const char * data);
     void publish(const char * subTopic, const char * data, bool retain);
