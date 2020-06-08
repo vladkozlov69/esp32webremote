@@ -153,8 +153,10 @@ void RFPluginClass::callback(const char* topic, const char * message)
     if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/rc/(%d+)/command").c_str()))
     {
         char buf [20]; 
+#ifdef RFPLUGIN_DEBUG
         Serial.print("RC Transmit");
         Serial.println(ms.GetCapture(buf, 0));
+#endif
         m_RCSwitch.send(atol(buf), 24);
     }
 }
@@ -173,7 +175,9 @@ void RFPluginClass::poll()
     {
         long receivedValue = m_RCSwitch.getReceivedValue();
 
+#ifdef RFPLUGIN_DEBUG
         Serial.print("Received "); Serial.println(m_RCSwitch.getReceivedValue());
+#endif
 
         if (m_SensorRegisterMode)
         {

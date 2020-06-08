@@ -15,7 +15,10 @@ void MQTTHelperClass::begin(Preferences * preferences, MDNSHelper * dnsHelper, M
 
     // try to init mqtt
     setServer(m_MqttHost);
+
+#ifdef MQTTHELPER_DEBUG
     Serial.println("MQTT Config done");
+#endif
 }
 
 bool MQTTHelperClass::setServer(const String& hostname)
@@ -25,12 +28,18 @@ bool MQTTHelperClass::setServer(const String& hostname)
     if (isValidIP(mqtt_ip))
     {
         m_MqttHostIP = mqtt_ip;
+#ifdef MQTTHELPER_DEBUG
         Serial.print("Setting MQTT IP:");
         Serial.println(mqtt_ip);
+#endif
         m_MqttClient->setServer(mqtt_ip.c_str(), 1883);
+#ifdef MQTTHELPER_DEBUG
         Serial.print("Setting callback... ");
+#endif
         m_MqttClient->setCallback(m_Callback);
+#ifdef MQTTHELPER_DEBUG
         Serial.println(" - OK");
+#endif
     }
 }
 
@@ -88,7 +97,9 @@ void MQTTHelperClass::publish(const char * subTopic, const char * data)
 
 void MQTTHelperClass::publish(const char * subTopic, const char * data, bool retain)
 {
+#ifdef MQTTHELPER_DEBUG
     Serial.printf("Publish: [%s] <= [%s]\n", subTopic, data);
+#endif
 
     int totalLength = MQTT_MAX_HEADER_SIZE + 3 + strlen(subTopic) + strlen(data) + m_MqttTopicPrefix.length();
 
@@ -109,13 +120,15 @@ void MQTTHelperClass::tryConnect()
     // Loop until we're reconnected
     if (millis() - m_LastReconnectRetry > 5000)
     {
+#ifdef MQTTHELPER_DEBUG
         Serial.print("Attempting MQTT connection...");
+#endif
         // Attempt to connect
         m_MqttClient->setServer(m_MqttHostIP.c_str(), 1883);
         if (m_MqttClient->connect(WiFi.macAddress().c_str(), 
             (m_MqttTopicPrefix + "/status").c_str(), 0, true, "offline")) 
         {
-            Serial.println("connected");
+            Serial.println("MQTT connected");
             // Subscribe
             m_MqttClient->subscribe((m_MqttTopicPrefix + "/+/+/command").c_str());
             m_MqttClient->subscribe((m_MqttTopicPrefix + "/+/command").c_str());
