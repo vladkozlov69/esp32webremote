@@ -225,7 +225,7 @@ void CellPluginClass::poll()
 
         if (m_LastEmailError > 0)
         {
-            char buf[5];
+            char buf[2 + 8 * sizeof(int)];
             m_MQTTHelper->publish("email/error/state", itoa(m_LastEmailError, buf, 10));
         }
 
@@ -236,8 +236,8 @@ void CellPluginClass::poll()
     if (!m_EmailInProgress && (m_LastSmsPoll > millis() || millis() - m_LastSmsPoll > 10000))
     {
         int smsCount = m_Sim.getSmsMessages();
-        m_Logger->println(String("SMS Count:") + smsCount);
-        char buf [20]; 
+        Serial.println(String("SMS Count:") + smsCount);
+        char buf[2 + 8 * sizeof(int)]; 
         m_MQTTHelper->publish("sms/incoming/state", itoa(smsCount, buf, 10), true);
         m_LastSmsPoll = millis();
     }

@@ -169,7 +169,7 @@ bool Sim5360::checkPacketStatus()
 
 int Sim5360::checkSmtpProgressStatus()
 {
-	char buf[5];
+	char buf[2 + 8 * sizeof(int)];
 	if (sendDataAndParseResponse("AT+CSMTPSSEND?", "%+CSMTPSSEND: (%d)", 0, buf))
 	{
 		return atoi(buf);
