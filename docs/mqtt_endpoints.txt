@@ -1,0 +1,56 @@
+All topics are prefixed by a common prefix configured in MQTT helper
+
+OUT: status
+
+    "online" when connected to broker, "offline" as LWT
+
+IN: call/(%d+)/command 
+
+    Dials a given number
+
+IN: sms/(%d+)/command
+
+    Sends message body content as SMS
+
+IN: sms/read/command
+
+    Reads all received SMS messages from SIM module and publishes them at sms/<msgSlot>/read in JSON format,
+    with keys "sender" and "body"
+
+IN: sms/delete/command
+
+    Deletes SMS message from SIM module, SMS message slot number is in MQTT message body
+
+IN: sim/reset/command
+
+    Resets SIM module
+
+IN: email/send/command
+
+    Sends email. Recipiend address, subject and body are in MQTT message JSON, "addr", "subj", "body"
+
+OUT: email/error/state
+
+    Error occurred during last SMTP operation, error code is in MQTT message body
+
+OUT: sms/incoming/state
+
+    Count of incoming SMS messages is in MQTT message body
+
+OUT: sim/poll/state
+    
+    SIM module status as JSON
+        doc["ss"] = m_Sim.checkSimPresence();
+        doc["ns"] = m_Sim.checkRegistration();
+        doc["op"] = m_Sim.getOperatorName();
+        doc["sl"] = m_Sim.getSignalLevel();
+        doc["pc"] = m_Sim.checkPacketStatus();
+        doc["ee"] = m_LastEmailError;
+
+IN: /rc/(%d+)/command
+
+    Sends RCSwitch signal to the specified device
+
+OUT: /rc/<sensor>/command
+
+    Sends "on" in MQTT message body when RCSwitch packet from <sensor> is received,

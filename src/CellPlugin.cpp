@@ -136,7 +136,7 @@ void CellPluginClass::callback(const char* topic, const char* message)
 
     }
 
-    if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/email/reset/command").c_str()))
+    if (REGEXP_MATCHED == ms.Match((MQTTHelper.getTopicPrefix() + "/sim/reset/command").c_str()))
     {
         m_Sim.simReset();
         m_SimReady = false;
