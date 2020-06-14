@@ -1,0 +1,292 @@
+��(=�
+9␘�
+�0�␄�␄�␀�6 seconds waiting for USB firmware upgrade
+ >> AT+CREG?
+ << AT+CREG?
++CREG: 0,1
+
+OK
+
+ >> AT+CGDCONT=1, "IP", "internet", "0.0.0.0"
+ << AT+CGDCONT=1, "IP", "internet", "0.0.0.0"
+OK
+
+ >> AT+CGATT=1
+ << AT+CGATT=1
+OK
+
+ >> AT+CGACT=1, 1
+ << AT+CGACT=1, 1
+OK
+
+ >> AT+CGACT?
+ << AT+CGACT?
++CGACT: 1,1
+
+OK
+
+ >> AT+CIPMODE=1
+ << AT+CIPMODE=1
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+NETOPEN
+ << AT+NETOPEN
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+NETOPEN?
+ << AT+NETOPEN?
++NETOPEN: 0,1
+
+OK
+
+ >> AT+CHTTPSSTATE
+ << AT+CHTTPSSTATE
++CHTTPSSTATE: 0
+
+OK
+
+ >> AT+CHTTPSSTART
+ << AT+CHTTPSSTART
++NETOPEN: 0
+
+OK
+
+ >> AT+CHTTPSSTATE
+ << AT+CHTTPSSTATE
++CHTTPSSTATE: 4
+
+OK
+
+ >> AT+CHTTPSOPSE="www.dweet.io",443,2
+ << AT+CHTTPSOPSE="www.dweet.io",443,2
+OK
+
+ >> AT+CHTTPSSTATE
+ << AT+CHTTPSSTATE
++CHTTPSSTATE: 7
+
+OK
+
+ >> AT+CHTTPSSEND=125
+ << AT+CHTTPSSEND=125
+>
+        ---> POST /dweet/for/0123456test HTTP/1.1
+Content-type: application/json
+Host: dweet.io
+Content-Length: 17
+
+
+ >> {"d1":1,"d2":"b"}
+ << POST /dweet/for/0123456test HTTP/1.1
+Content-type: application/json
+Host: dweet.io
+Content-Length: 17
+
+{"d1":1,"d2":"b"}
+OK
+
+ >> AT+CHTTPSSEND
+ << AT+CHTTPSSEND
+OK
+
+ >> AT+CHTTPSRECV?
+ << 
++CHTTPSSEND: 0
+AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << AT+CHTTPSRECV?
++CHTTPSRECV: LEN,0
+
+OK
+
+ >> AT+CHTTPSRECV?
+ << 
++CHTTPS: RECV EVENT
+AT+CHTTPSRECV?
++CHTTPSRECV: LEN,364
+
+OK
+
+AT+CHTTPSRECV=364
+ >> AT+CHTTPSRECV=364
+ << AT+CHTTPSRECV=364
+OK
+
+ >> AT+CHTTPSCLSE
+ << 
++CHTTPSRECV: DATA,364
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Content-Type: application/json
+Content-Length: 199
+Date: Sun, 14 Jun 2020 09:41:39 GMT
+Connection: keep-alive
+
+{"this":"succeeded","by":"dweeting","the":"dweet","with":{"thing":
+OK
+
+ >> AT+CHTTPSSTOP
+ << AT+CHTTPSSTOP
+OK
+
+ >> AT+CHTTPSSTATE
+ << AT+CHTTPSSTATE
++CHTTPSSTATE: 0
+
+OK
+
+ >> AT+NETCLOSE
+ << AT+NETCLOSE
+OK
+
++NETCLOSE: 0
+
+GPRS Network closed after sending HTTP(S) request

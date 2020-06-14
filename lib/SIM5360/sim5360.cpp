@@ -290,8 +290,13 @@ bool Sim5360::sendDataAndCheckPrompt(const char * command)
 
 char * Sim5360::sendDataAndParseResponse(const char * command, const char * regex, int captureNumber, char * buf)
 {
+	return sendDataAndParseResponse(command, NULL, 2000, regex, captureNumber, buf);
+}
+
+char * Sim5360::sendDataAndParseResponse(const char * command, const char * mandatorySignature, int timeout, const char * regex, int captureNumber, char * buf)
+{
 	MatchState ms;
-	lastResult = sendData(command, 2000);
+	lastResult = sendData(command, mandatorySignature, timeout);
 	ms.Target((char *) (lastResult.c_str()));
 
 	if (ms.Match(regex) == REGEXP_MATCHED)
@@ -310,6 +315,11 @@ bool Sim5360::sendDataAndCheck(const char * command, const int timeout, const in
 }
 
 String Sim5360::sendData(const char * command, const int timeout)
+{
+	return sendData(command, NULL, timeout);
+}
+
+String Sim5360::sendData(const char * command, const char * mandatorySignature, const int timeout)
 {
 	String response = "";
 
@@ -330,7 +340,10 @@ String Sim5360::sendData(const char * command, const int timeout)
 		{
 			char c = m_Module->read();
 			response += c;
-			responseEndDetected = response.endsWith("\r\nOK\r\n") || response.endsWith("\r\nERROR\r\n");
+			responseEndDetected = (response.endsWith("\r\nOK\r\n") 
+				&& (NULL == mandatorySignature || response.indexOf(mandatorySignature) > 0)) 
+			
+			|| response.endsWith("\r\nERROR\r\n");
 		}
 	}
 
@@ -341,4 +354,191 @@ String Sim5360::sendData(const char * command, const int timeout)
 	}
 
 	return response;
+}
+
+bool Sim5360::isGPRSNetworkOpened()
+{
+	char buf[5];
+	if (sendDataAndParseResponse("AT+NETOPEN?", "%+NETOPEN: (%d),%d", 0, buf))
+	{
+		return 1 == atoi(buf);
+	}
+
+	return false;
+}
+
+boolean Sim5360::openGPRSNetwork()
+{
+	// connect in transparent mode
+	sendDataAndCheckOk("AT+CIPMODE=1");
+
+	if (isGPRSNetworkOpened())
+	{
+		return true;
+	}
+
+	sendDataAndCheckOk("AT+NETOPEN");
+
+	for (int i = 0; i < 10; i++)
+	{
+		if (isGPRSNetworkOpened())
+		{
+			return true;
+
+			delay(200);
+		}
+	}
+
+	return false;
+}
+
+bool Sim5360::closeGPRSNetwork()
+{
+	char buf[5];
+	if (sendDataAndParseResponse("AT+NETCLOSE", "+NETCLOSE:", 5000, "%+NETCLOSE: (%d)", 0, buf))
+	{
+		return 0 == atoi(buf);
+	}
+
+	return false;
+}
+
+int Sim5360::getHttpsState(void)
+{
+	char buf[5];
+	if (sendDataAndParseResponse("AT+CHTTPSSTATE", "%+CHTTPSSTATE: (%d)", 0, buf))
+	{
+		return atoi(buf);
+	}
+
+	return -1;
+}
+
+bool Sim5360::waitForHttpsState(int desiredState, int timeOut)
+{
+	unsigned long startedAt = millis();
+	while (millis() < startedAt + timeOut)
+	{
+		if (desiredState == getHttpsState())
+		{
+			return true;
+		}
+
+		delay(200);
+	}
+
+	return false;
+}
+
+int8_t Sim5360::GPRSstate(void)
+{
+	char buf[5];
+	if (sendDataAndParseResponse("AT+CGATT?", "%+CGATT: (%d)", 0, buf))
+	{
+		return atoi(buf);
+	}
+
+	return -1;
+}
+
+int Sim5360::waitForHttpReceive(int timeOut)
+{
+	unsigned long startedAt = millis();
+
+	while (millis() < startedAt + timeOut)
+	{
+		char buf[10];
+		if (sendDataAndParseResponse("AT+CHTTPSRECV?", "%+CHTTPSRECV: LEN,(%d+)", 0, buf));
+		{
+			int replyLen = atoi(buf);
+			if (replyLen > 0)
+			{
+				return replyLen;
+			}
+		}
+		delay(200);
+	}
+	
+	return -1;
+}
+
+boolean Sim5360::postData(const char *server, uint16_t port, bool secure, const char *URL, const char *body)
+{
+	// Sample request URL: "GET /dweet/for/{deviceID}?temp={temp}&batt={batt} HTTP/1.1\r\nHost: dweet.io\r\n\r\n"
+
+	if (openGPRSNetwork())
+	{
+		m_DebugOut->println(F("GPRS Network opened for HTTP(S) post"));
+	}
+
+	int httpState = getHttpsState();
+	// check if state != 7, then call start
+	if (HTTPS_SESSION_OPENED != httpState)
+	{
+  		sendDataAndCheckOk("AT+CHTTPSSTART");
+	}
+
+	if (HTTPS_SESSION_OPENED == httpState || waitForHttpsState(HTTPS_NETWORK_OPENED, 5000)) // it could be HTTPS_SESSION_OPENED as well
+	{
+		char auxStr[200];
+		sprintf(auxStr, "AT+CHTTPSOPSE=\"%s\",%d,%d", server, port, secure ? 2 : 1);
+		sendDataAndCheckOk(auxStr);
+
+		if (waitForHttpsState(HTTPS_SESSION_OPENED, 5000))
+		{
+			sprintf(auxStr, "AT+CHTTPSSEND=%i", strlen(URL) + strlen(body));
+
+			sendDataAndCheckPrompt(auxStr);
+
+			if (NULL == body || strlen(body) == 0) 
+			{
+				sendDataAndCheckOk(URL);
+			}
+			else 
+			{
+				m_Module->print(URL);
+
+				if (m_DebugOut)
+				{
+					m_DebugOut->print("\t---> ");
+					m_DebugOut->println(URL);
+				}
+
+				sendDataAndCheckOk(body);
+			}
+
+			if (SIM_MODULE_GEN::SIM53XX == m_ModuleType)
+			{
+				sendDataAndCheckOk("AT+CHTTPSSEND");
+			}
+
+			uint16_t replyLen = waitForHttpReceive(10000);
+			if (replyLen > 0)
+			{
+				sprintf(auxStr, "AT+CHTTPSRECV=%i", replyLen);
+				Serial.println(auxStr);
+				sendData(auxStr, 2000);
+			}
+
+			// Close HTTP/HTTPS session
+			sendDataAndCheckOk("AT+CHTTPSCLSE");
+		}
+
+		//------
+	}
+
+	sendDataAndCheckOk("AT+CHTTPSSTOP");
+	waitForHttpsState(0, 5000);
+	
+	if (closeGPRSNetwork())
+	{
+		m_DebugOut->println(F("GPRS Network closed after sending HTTP(S) request"));
+	}
+
+	return false;
+}
+
+void Sim5360::getNetworkInfo(void)
+{
+	sendDataAndCheckOk("AT+CPSI?");
 }

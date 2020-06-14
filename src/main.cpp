@@ -66,6 +66,8 @@ void notFound(AsyncWebServerRequest *request)
     request->send(404, "text/plain", "Not found");
 }
 
+void doTest();
+
 void setup()
 {
     // Serial port for debugging purposes
@@ -73,14 +75,16 @@ void setup()
     Serial1.begin(115200, SERIAL_8N1, SERIAL1_RXPIN, SERIAL1_TXPIN);
 
     Serial.println("6 seconds waiting for USB firmware upgrade");
-    delay(6000);
+    //delay(6000);
 
     // Initialize SPIFFS
-    if(!SPIFFS.begin(false))
+    if(!SPIFFS.begin(true))
     {
         Serial.println("An Error has occurred while mounting SPIFFS");
         return;
     }
+
+    doTest();
 
     APHelper.begin(&preferences, &LOG);
 
@@ -134,4 +138,34 @@ void loop()
     MQTTHelper.poll();
     RFPlugin.poll();
     CellPlugin.poll();
+}
+
+void doTest()
+{
+    Sim5360 sim;
+
+    sim.begin("internet", &Serial1, &Serial);
+
+    while (!sim.checkRegistration())
+    {
+        Serial.println("Waiting for SIM registration...");
+        delay(2000);
+    }
+
+    sim.inetConnect();
+
+    while (!sim.checkPacketStatus())
+    {
+        Serial.println("Waiting for Internet connection...");
+        delay(2000);       
+    }
+
+    sim.postData("www.dweet.io", 443, true, 
+    "POST /dweet/for/0123456test HTTP/1.1\r\nContent-type: application/json\r\nHost: dweet.io\r\nContent-Length: 17\r\n\r\n", 
+    "{\"d1\":1,\"d2\":\"b\"}");
+
+    //sim.inetDisconnect();
+
+    while(true) {};
+    
 }
