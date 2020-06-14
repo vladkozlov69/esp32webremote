@@ -13,6 +13,7 @@ void MQTTHelperClass::begin(Preferences * preferences, MDNSHelper * dnsHelper, S
     m_Preferences->end();
 
     m_MqttClient = new PubSubClient(espClient);
+    m_MqttClient->setBufferSize(1024);
 
     // try to init mqtt
     setServer(m_MqttHost);
