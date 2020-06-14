@@ -359,6 +359,7 @@ String Sim5360::sendData(const char * command, const char * mandatorySignature, 
 bool Sim5360::isGPRSNetworkOpened()
 {
 	char buf[5];
+	// TODO sim7600 answer format is +NETOPEN:<net_state>
 	if (sendDataAndParseResponse("AT+NETOPEN?", "%+NETOPEN: (%d),%d", 0, buf))
 	{
 		return 1 == atoi(buf);
@@ -384,9 +385,9 @@ boolean Sim5360::openGPRSNetwork()
 		if (isGPRSNetworkOpened())
 		{
 			return true;
-
-			delay(200);
 		}
+		
+		delay(200);
 	}
 
 	return false;
