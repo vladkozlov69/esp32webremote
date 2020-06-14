@@ -29,6 +29,10 @@ IN: email/send/command
 
     Sends email. Recipiend address, subject and body are in MQTT message JSON, "addr", "subj", "body"
 
+IN: https/post/command
+
+    Performs HTTP post. Params: server, port, url, body.
+
 OUT: email/error/state
 
     Error occurred during last SMTP operation, error code is in MQTT message body
