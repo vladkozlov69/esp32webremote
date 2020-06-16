@@ -10,6 +10,8 @@ void Sim5360::begin(const char * apnName, Stream * module, Stream * debugOut)
 	strncpy(m_ApnName, apnName, sizeof(m_ApnName));
 	m_Module = module;
 	m_DebugOut = debugOut;
+
+	m_ModuleType = SIM_MODULE_GEN::SIM7XXX;
 }
 
 bool Sim5360::checkSimPresence()
@@ -359,8 +361,9 @@ String Sim5360::sendData(const char * command, const char * mandatorySignature, 
 bool Sim5360::isGPRSNetworkOpened()
 {
 	char buf[5];
-	// TODO sim7600 answer format is +NETOPEN:<net_state>
-	if (sendDataAndParseResponse("AT+NETOPEN?", "%+NETOPEN: (%d),%d", 0, buf))
+	if (sendDataAndParseResponse("AT+NETOPEN?", 
+		(m_ModuleType == SIM_MODULE_GEN::SIM7XXX ? "%+NETOPEN: (%d)" : "%+NETOPEN: (%d),%d"), 
+		0, buf))
 	{
 		return 1 == atoi(buf);
 	}
@@ -407,7 +410,9 @@ bool Sim5360::closeGPRSNetwork()
 int Sim5360::getHttpsState(void)
 {
 	char buf[5];
-	if (sendDataAndParseResponse("AT+CHTTPSSTATE", "%+CHTTPSSTATE: (%d)", 0, buf))
+	if (sendDataAndParseResponse("AT+CHTTPSSTATE", 
+		(m_ModuleType == SIM_MODULE_GEN::SIM7XXX ? "%+CHTTPSSTATE:(%d)" : "%+CHTTPSSTATE: (%d)"),
+		0, buf))
 	{
 		return atoi(buf);
 	}
@@ -457,7 +462,7 @@ int Sim5360::waitForHttpReceive(int timeOut)
 				return replyLen;
 			}
 		}
-		delay(200);
+		delay(500);
 	}
 	
 	return -1;
@@ -473,19 +478,34 @@ boolean Sim5360::postData(const char *server, uint16_t port, bool secure, const 
 	}
 
 	int httpState = getHttpsState();
-	// check if state != 7, then call start
-	if (HTTPS_SESSION_OPENED != httpState)
+
+	int expectedHttpsSessionOpenedState = (m_ModuleType == SIM_MODULE_GEN::SIM7XXX
+		? HTTPS_NETWORK_OPENING
+		: HTTPS_SESSION_OPENED);
+
+	int expectedHttpsNetworkOpenedState = (m_ModuleType == SIM_MODULE_GEN::SIM7XXX
+		? HTTPS_NETWORK_OPENING
+		: HTTPS_NETWORK_OPENED);
+		
+	// check if session isn't already opened, then call start
+	if (expectedHttpsSessionOpenedState != httpState)
 	{
   		sendDataAndCheckOk("AT+CHTTPSSTART");
 	}
 
-	if (HTTPS_SESSION_OPENED == httpState || waitForHttpsState(HTTPS_NETWORK_OPENED, 5000)) // it could be HTTPS_SESSION_OPENED as well
+	//delay(2000);
+
+	if (expectedHttpsSessionOpenedState == httpState || waitForHttpsState(expectedHttpsNetworkOpenedState, 5000)) // it could be HTTPS_SESSION_OPENED as well
 	{
 		char auxStr[200];
 		sprintf(auxStr, "AT+CHTTPSOPSE=\"%s\",%d,%d", server, port, secure ? 2 : 1);
-		sendDataAndCheckOk(auxStr);
+		//sendDataAndCheckOk(auxStr); it's for 5320
+		if (sendData(auxStr, "+CHTTPSOPSE:0", 5000).indexOf("OK") > 0);
+		{
+			Serial.println("successfull CHTTPSOPSE op"); // it's for 7600
+		}
 
-		if (waitForHttpsState(HTTPS_SESSION_OPENED, 5000))
+		if (waitForHttpsState(expectedHttpsSessionOpenedState, 5000))
 		{
 			sprintf(auxStr, "AT+CHTTPSSEND=%i", strlen(URL) + strlen(body));
 
@@ -501,7 +521,7 @@ boolean Sim5360::postData(const char *server, uint16_t port, bool secure, const 
 
 				if (m_DebugOut)
 				{
-					m_DebugOut->print("\t---> ");
+					m_DebugOut->print(F("\t---> "));
 					m_DebugOut->println(URL);
 				}
 
@@ -513,7 +533,7 @@ boolean Sim5360::postData(const char *server, uint16_t port, bool secure, const 
 				sendDataAndCheckOk("AT+CHTTPSSEND");
 			}
 
-			uint16_t replyLen = waitForHttpReceive(10000);
+			uint16_t replyLen = waitForHttpReceive(15000);
 			if (replyLen > 0)
 			{
 				sprintf(auxStr, "AT+CHTTPSRECV=%i", replyLen);
@@ -524,10 +544,16 @@ boolean Sim5360::postData(const char *server, uint16_t port, bool secure, const 
 			// Close HTTP/HTTPS session
 			sendDataAndCheckOk("AT+CHTTPSCLSE");
 		}
-
-		//------
+		else
+		{
+			m_DebugOut->println(F("Command CHTTPSOPSE failed"));
+		}
 	}
-
+	else
+	{
+		m_DebugOut->println(F("HTTPS cannot start"));
+	}
+	
 	sendDataAndCheckOk("AT+CHTTPSSTOP");
 	waitForHttpsState(0, 5000);
 	

@@ -144,13 +144,15 @@ void doTest()
 {
     Sim5360 sim;
 
-    sim.begin("internet", &Serial1, &Serial);
+    sim.begin("internet.unite.md", &Serial1, &Serial);
 
     while (!sim.checkRegistration())
     {
         Serial.println("Waiting for SIM registration...");
         delay(2000);
     }
+
+    sim.getNetworkInfo();
 
     sim.inetConnect();
 
@@ -160,10 +162,13 @@ void doTest()
         delay(2000);       
     }
 
+    sim.getNetworkInfo();
+
     sim.postData("www.dweet.io", 443, true, 
     "POST /dweet/for/0123456test HTTP/1.1\r\nContent-type: application/json\r\nHost: dweet.io\r\nContent-Length: 17\r\n\r\n", 
     "{\"d1\":1,\"d2\":\"b\"}");
 
+sim.getNetworkInfo();
     //sim.inetDisconnect();
 
     while(true) {};

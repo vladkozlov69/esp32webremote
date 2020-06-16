@@ -5,6 +5,7 @@
 #include <Regexp.h>
 #include "ESPAsyncWebServer.h"
 
+#define HTTPS_NETWORK_OPENING 2
 #define HTTPS_NETWORK_OPENED 4 
 #define HTTPS_SESSION_OPENED 7
 
