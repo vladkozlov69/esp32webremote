@@ -69,21 +69,23 @@ public:
 
 	boolean postData(const char *server, uint16_t port, bool secure, const char *URL, const char *body);
 	void getNetworkInfo(void);
-	int getHttpsState(void);
-	bool waitForHttpsState(int desiredState, int timeOut);
 
 	int getSignalLevel();
 	String sendData(const char * command, const int timeout);
 	String sendData(const char * command, const char * mandatorySignature, const int timeout);
-	int waitForHttpReceive(int timeOut);
+	
 	int checkSmtpProgressStatus();
 	bool sendDataAndCheckOk(const char * command);
 private:
 	char * sendDataAndParseResponse(const char * command, const char * regex, int captureNumber, char * buf);
 	char * sendDataAndParseResponse(const char * command, const char * mandatorySignature, int timeout, const char * regex, int captureNumber, char * buf);
-
 	bool sendDataAndCheckPrompt(const char * command);
 	bool sendDataAndCheck(const char * command, const int timeout, const int wait, const char * expectedTail);
+private:
+	int waitForHttpReceive(int timeOut);
+	bool openHTTPSConnection(const char *connectionString, int expectedHttpsSessionOpenedState, int expectedHttpsNetworkOpenedState, int timeout);
+	int getHttpsState(void);
+	bool waitForHttpsState(int desiredState, int timeOut);
 };
 
 #endif

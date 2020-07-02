@@ -468,7 +468,30 @@ int Sim5360::waitForHttpReceive(int timeOut)
 	return -1;
 }
 
-boolean Sim5360::postData(const char *server, uint16_t port, bool secure, const char *URL, const char *body)
+bool Sim5360::openHTTPSConnection(const char *connectionString, 
+	int expectedHttpsSessionOpenedState,
+	int expectedHttpsNetworkOpenedState,
+	int timeout)
+{
+	if (m_ModuleType == SIM_MODULE_GEN::SIM7XXX)
+	{
+		if (sendData(connectionString, "+CHTTPSOPSE:0", 5000).indexOf("OK") > 0);
+		{
+			Serial.println("successfull CHTTPSOPSE op"); // it's for 7600
+			return true;
+		}
+
+		return false;
+	}
+	else
+	{
+		int httpState = getHttpsState();
+		sendDataAndCheckOk(connectionString); //it's for 5320
+		return (expectedHttpsSessionOpenedState == httpState || waitForHttpsState(expectedHttpsNetworkOpenedState, 5000)); // it could be HTTPS_SESSION_OPENED as well
+	}
+}
+
+bool Sim5360::postData(const char *server, uint16_t port, bool secure, const char *URL, const char *body)
 {
 	// Sample request URL: "GET /dweet/for/{deviceID}?temp={temp}&batt={batt} HTTP/1.1\r\nHost: dweet.io\r\n\r\n"
 
@@ -493,17 +516,19 @@ boolean Sim5360::postData(const char *server, uint16_t port, bool secure, const 
   		sendDataAndCheckOk("AT+CHTTPSSTART");
 	}
 
-	//delay(2000);
-
-	if (expectedHttpsSessionOpenedState == httpState || waitForHttpsState(expectedHttpsNetworkOpenedState, 5000)) // it could be HTTPS_SESSION_OPENED as well
+	char auxStr[200];
+	sprintf(auxStr, "AT+CHTTPSOPSE=\"%s\",%d,%d", server, port, secure ? 2 : 1);
+	if (openHTTPSConnection(auxStr, expectedHttpsSessionOpenedState, expectedHttpsNetworkOpenedState, 10000))
 	{
-		char auxStr[200];
-		sprintf(auxStr, "AT+CHTTPSOPSE=\"%s\",%d,%d", server, port, secure ? 2 : 1);
-		//sendDataAndCheckOk(auxStr); it's for 5320
-		if (sendData(auxStr, "+CHTTPSOPSE:0", 5000).indexOf("OK") > 0);
-		{
-			Serial.println("successfull CHTTPSOPSE op"); // it's for 7600
-		}
+	// if (expectedHttpsSessionOpenedState == httpState || waitForHttpsState(expectedHttpsNetworkOpenedState, 5000)) // it could be HTTPS_SESSION_OPENED as well
+	// {
+	// 	char auxStr[200];
+	// 	sprintf(auxStr, "AT+CHTTPSOPSE=\"%s\",%d,%d", server, port, secure ? 2 : 1);
+	// 	//sendDataAndCheckOk(auxStr); it's for 5320
+	// 	if (sendData(auxStr, "+CHTTPSOPSE:0", 5000).indexOf("OK") > 0);
+	// 	{
+	// 		Serial.println("successfull CHTTPSOPSE op"); // it's for 7600
+	// 	}
 
 		if (waitForHttpsState(expectedHttpsSessionOpenedState, 5000))
 		{
